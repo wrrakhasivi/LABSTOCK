@@ -1,42 +1,26 @@
 [
   {
-    "content": "Analisis struktur Excel (blueprint) - selesai",
+    "content": "Fase 2: Edit manual Saldo Awal & Sisa Stok (override) + Saldo Awal otomatis dari bulan lalu",
     "status": "completed"
   },
   {
-    "content": "Dapatkan panduan desain dari design_agent",
+    "content": "Fase 2: Form input PRF manual (nama reagen, reagen ke-, jumlah kit, tanggal PR)",
     "status": "completed"
   },
   {
-    "content": "Fase 1: Backend - model MongoDB, seeder dari seed_data.json, import_log",
+    "content": "Fase 2: Penerimaan berdasarkan PRF + status Complete + menambah Stok Masuk",
     "status": "completed"
   },
   {
-    "content": "Fase 1: Backend - service kalkulasi monitoring (rekonstruksi hari 1-31, sisa stok, status warna)",
+    "content": "Fase 2: Import Data LIS Excel (LIS_YYMMDD) -> pemakaian harian via Mapping_Test",
     "status": "completed"
   },
   {
-    "content": "Fase 1: Backend - API dasar (health, excel-summary, reagen, monitoring, mapping, lis, prf, penerimaan)",
+    "content": "Fase 2: Edit Pemetaan Test (mapping) + Sort Nama Reagen + Hapus source file LIS",
     "status": "completed"
   },
   {
-    "content": "Fase 1: Frontend - layout, routing, navigasi Bahasa Indonesia + design tokens",
-    "status": "completed"
-  },
-  {
-    "content": "Fase 1: Frontend - halaman Pemantauan Stok (tabel 1-31 + status warna)",
-    "status": "completed"
-  },
-  {
-    "content": "Fase 1: Frontend - Master Reagen, Data LIS, PRF, Penerimaan, Analisis Excel, Dashboard",
-    "status": "completed"
-  },
-  {
-    "content": "Fase 1: Semua user stories tercakup dalam pengembangan",
-    "status": "completed"
-  },
-  {
-    "content": "Fase 1: End-to-End Testing menggunakan Testing Agent",
-    "status": "completed"
+    "content": "Fase 2: End-to-End Testing (backend + frontend) semua fitur baru",
+    "status": "in_progress"
   }
 ]

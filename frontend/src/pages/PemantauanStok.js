@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePeriod } from '../lib/period';
 import { api, fmtNum } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
@@ -6,7 +6,8 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Skeleton } from '../components/ui/skeleton';
-import { Search, RefreshCw, Info } from 'lucide-react';
+import { toast } from 'sonner';
+import { Search, RefreshCw, Info, Wand2, Pencil, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 const FILTERS = [
   { key: 'all', label: 'Semua', cls: 'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground' },
@@ -16,6 +17,64 @@ const FILTERS = [
   { key: 'unknown', label: 'Perlu Cek', cls: 'data-[active=true]:bg-slate-500 data-[active=true]:text-white' },
 ];
 
+// Inline-editable numeric cell (click to edit; Enter/blur = simpan, Esc = batal, kosong = null)
+function EditableNumber({ value, onSave, testid, alignCls = 'text-right', valueCls = '', marker = null, title }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState('');
+  const inputRef = useRef(null);
+
+  const start = () => {
+    setVal(value === null || value === undefined ? '' : String(value));
+    setEditing(true);
+  };
+  useEffect(() => { if (editing && inputRef.current) inputRef.current.select(); }, [editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const trimmed = val.trim();
+    const parsed = trimmed === '' ? null : Number(trimmed);
+    if (trimmed !== '' && Number.isNaN(parsed)) { toast.error('Nilai harus angka'); return; }
+    const current = value === null || value === undefined ? null : Number(value);
+    if (parsed === current) return; // no change
+    onSave(parsed);
+  };
+
+  if (editing) {
+    return (
+      <td className={`border-b px-1 py-1 ${alignCls}`}>
+        <input
+          ref={inputRef}
+          type="number"
+          data-testid={`${testid}-input`}
+          className="num h-7 w-16 rounded border border-primary bg-white px-1 text-right text-sm outline-none ring-2 ring-ring"
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit();
+            else if (e.key === 'Escape') setEditing(false);
+          }}
+        />
+      </td>
+    );
+  }
+
+  return (
+    <td
+      className={`num group/edit cursor-pointer border-b px-2 py-1.5 ${alignCls} ${valueCls} hover:bg-primary/5`}
+      data-testid={testid}
+      title={title || 'Klik untuk edit'}
+      onClick={start}
+    >
+      <span className="inline-flex items-center gap-1">
+        {marker}
+        {fmtNum(value)}
+        <Pencil className="h-3 w-3 opacity-0 text-muted-foreground transition-opacity group-hover/edit:opacity-70" />
+      </span>
+    </td>
+  );
+}
+
 export default function PemantauanStok() {
   const { year, month } = usePeriod();
   const [data, setData] = useState(null);
@@ -23,6 +82,8 @@ export default function PemantauanStok() {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
   const [q, setQ] = useState('');
+  const [autoLoading, setAutoLoading] = useState(false);
+  const [sortDir, setSortDir] = useState('asc'); // 'asc' | 'desc' | null
 
   const load = () => {
     setLoading(true);
@@ -40,12 +101,51 @@ export default function PemantauanStok() {
 
   const rows = useMemo(() => {
     if (!data) return [];
-    return data.rows.filter((r) => {
+    const list = data.rows.filter((r) => {
       if (filter !== 'all' && r.status !== filter) return false;
       if (q && !r.nama_reagen.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
-  }, [data, filter, q]);
+    if (sortDir) {
+      list.sort((a, b) => a.nama_reagen.localeCompare(b.nama_reagen, 'id', { sensitivity: 'base' }));
+      if (sortDir === 'desc') list.reverse();
+    }
+    return list;
+  }, [data, filter, q, sortDir]);
+
+  const toggleSort = () => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+  const SortIcon = sortDir === 'asc' ? ArrowUp : sortDir === 'desc' ? ArrowDown : ArrowUpDown;
+
+  const saveSaldo = async (row, value) => {
+    try {
+      await api.setSaldoAwal({ reagen_id: row.reagen_id, year, month, saldo_awal: value });
+      toast.success(`Saldo awal "${row.nama_reagen}" diperbarui`);
+      load();
+    } catch (e) { toast.error('Gagal menyimpan saldo awal'); }
+  };
+
+  const saveSisa = async (row, value) => {
+    try {
+      await api.setSisaOverride({ reagen_id: row.reagen_id, year, month, sisa_override: value });
+      toast.success(value === null
+        ? `Sisa stok "${row.nama_reagen}" kembali ke perhitungan otomatis`
+        : `Sisa stok "${row.nama_reagen}" disesuaikan manual`);
+      load();
+    } catch (e) { toast.error('Gagal menyimpan sisa stok'); }
+  };
+
+  const runAuto = async () => {
+    setAutoLoading(true);
+    try {
+      const res = await api.autoSaldoAwal(year, month);
+      toast.success(`Saldo awal ${res.updated} reagen diisi dari ${res.from_period}`);
+      load();
+    } catch (e) {
+      toast.error('Gagal mengisi saldo awal otomatis');
+    } finally {
+      setAutoLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -66,6 +166,9 @@ export default function PemantauanStok() {
               className="h-9 w-[200px] pl-8"
             />
           </div>
+          <Button variant="outline" size="sm" onClick={runAuto} disabled={autoLoading} data-testid="auto-saldo-awal-button" title="Isi Saldo Awal = Sisa Stok bulan sebelumnya">
+            <Wand2 className="mr-1.5 h-3.5 w-3.5" /> {autoLoading ? 'Memproses...' : 'Saldo Awal Otomatis'}
+          </Button>
           <Button variant="outline" size="sm" onClick={load} data-testid="pemantauan-reload-button">
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Muat Ulang
           </Button>
@@ -118,15 +221,19 @@ export default function PemantauanStok() {
               <table className="w-full border-collapse text-sm" data-testid="pemantauan-table">
                 <thead>
                   <tr className="text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="ls-sticky-col border-b border-r px-3 py-2 text-left min-w-[220px]">Nama Reagen</th>
-                    <th className="border-b px-2 py-2 text-right">Saldo Awal</th>
+                    <th className="ls-sticky-col border-b border-r px-3 py-2 text-left min-w-[220px]">
+                      <button onClick={toggleSort} data-testid="sort-nama-reagen" className="inline-flex items-center gap-1 uppercase tracking-wide hover:text-foreground" title="Urutkan berdasarkan Nama Reagen">
+                        Nama Reagen <SortIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </th>
+                    <th className="border-b px-2 py-2 text-right whitespace-nowrap" title="Klik nilai untuk edit manual, atau gunakan tombol Saldo Awal Otomatis">Saldo Awal ✎</th>
                     {dayCols.map((d) => (
                       <th key={d} className="border-b px-1 py-2 text-center w-10">{d}</th>
                     ))}
                     <th className="border-b border-l px-2 py-2 text-right">QC</th>
                     <th className="border-b px-2 py-2 text-right">Total Pakai</th>
                     <th className="border-b px-2 py-2 text-right">Stok Masuk</th>
-                    <th className="border-b px-2 py-2 text-right">Sisa Stok</th>
+                    <th className="border-b px-2 py-2 text-right whitespace-nowrap" title="Otomatis dari perhitungan; klik untuk penyesuaian manual">Sisa Stok ✎</th>
                     <th className="border-b px-2 py-2 text-right">Buffer</th>
                     <th className="border-b px-2 py-2 text-left">Satuan</th>
                     <th className="border-b px-2 py-2 text-center min-w-[110px]">Status</th>
@@ -136,7 +243,12 @@ export default function PemantauanStok() {
                   {rows.map((r) => (
                     <tr key={r.reagen_id} className={`ls-row ls-row-${r.status}`}>
                       <td className="ls-sticky-col border-b border-r px-3 py-1.5 font-medium">{r.nama_reagen}</td>
-                      <td className="num border-b px-2 py-1.5 text-right">{fmtNum(r.saldo_awal)}</td>
+                      <EditableNumber
+                        value={r.saldo_awal}
+                        onSave={(v) => saveSaldo(r, v)}
+                        testid={`saldo-awal-${r.reagen_id}`}
+                        title="Klik untuk edit Saldo Awal"
+                      />
                       {dayCols.map((d) => {
                         const v = r.hari?.[String(d)] || 0;
                         return (
@@ -146,7 +258,18 @@ export default function PemantauanStok() {
                       <td className="num border-b border-l px-2 py-1.5 text-right">{fmtNum(r.qc)}</td>
                       <td className="num border-b px-2 py-1.5 text-right font-semibold">{fmtNum(r.total_pemakaian)}</td>
                       <td className="num border-b px-2 py-1.5 text-right">{fmtNum(r.stok_masuk)}</td>
-                      <td className={`num border-b px-2 py-1.5 text-right font-semibold ${r.status === 'critical' ? 'text-red-700' : ''}`}>{fmtNum(r.sisa_stock)}</td>
+                      <EditableNumber
+                        value={r.sisa_stock}
+                        onSave={(v) => saveSisa(r, v)}
+                        testid={`sisa-stok-${r.reagen_id}`}
+                        valueCls={`font-semibold ${r.status === 'critical' ? 'text-red-700' : ''}`}
+                        title={r.is_override
+                          ? `Nilai manual. Otomatis = ${r.sisa_auto ?? '-'}. Kosongkan untuk kembali ke otomatis.`
+                          : 'Klik untuk penyesuaian manual'}
+                        marker={r.is_override
+                          ? <span className="h-1.5 w-1.5 rounded-full bg-primary" title="Nilai manual" data-testid={`sisa-override-marker-${r.reagen_id}`} />
+                          : null}
+                      />
                       <td className="num border-b px-2 py-1.5 text-right text-muted-foreground">{fmtNum(r.buffer_stock)}</td>
                       <td className="border-b px-2 py-1.5 text-left text-xs text-muted-foreground">{r.satuan}</td>
                       <td className="border-b px-2 py-1.5 text-center"><StatusBadge status={r.status} /></td>
@@ -156,10 +279,16 @@ export default function PemantauanStok() {
               </table>
             </div>
           </Card>
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Info className="h-3.5 w-3.5" />
-            Menampilkan {rows.length} dari {data.total_reagen} reagen. Sisa Stok = (Saldo Awal - Total Pemakaian) + Stok Masuk. Status "Perlu Cek" = saldo awal belum tersedia (sel #REF! pada Excel asli).
-          </p>
+          <div className="space-y-1 text-xs text-muted-foreground">
+            <p className="flex items-center gap-1.5">
+              <Info className="h-3.5 w-3.5" />
+              Menampilkan {rows.length} dari {data.total_reagen} reagen. Sisa Stok = (Saldo Awal - Total Pemakaian) + Stok Masuk. Status "Perlu Cek" = saldo awal belum tersedia.
+            </p>
+            <p className="flex items-center gap-1.5">
+              <Pencil className="h-3 w-3" />
+              Kolom <b>Saldo Awal</b> & <b>Sisa Stok</b> dapat diklik untuk edit manual. Sisa Stok dengan titik biru = disesuaikan manual (kosongkan nilai untuk kembali ke otomatis). Tombol <b>Saldo Awal Otomatis</b> mengisi saldo awal dari sisa stok bulan sebelumnya.
+            </p>
+          </div>
         </>
       )}
     </div>

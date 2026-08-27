@@ -14,9 +14,23 @@ export const api = {
   updateReagen: (id, body) => client.put(`/reagen/${id}`, body).then((r) => r.data),
   createReagen: (body) => client.post('/reagen', body).then((r) => r.data),
   monitoring: (year, month) => client.get('/monitoring', { params: { year, month } }).then((r) => r.data),
+  setSaldoAwal: (body) => client.put('/monitoring/saldo-awal', body).then((r) => r.data),
+  setSisaOverride: (body) => client.put('/monitoring/sisa-override', body).then((r) => r.data),
+  autoSaldoAwal: (year, month) => client.post('/monitoring/auto-saldo-awal', { year, month }).then((r) => r.data),
   mappingTests: (status) => client.get('/mapping-tests', { params: { status } }).then((r) => r.data),
+  updateMapping: (id, body) => client.put(`/mapping-tests/${id}`, body).then((r) => r.data),
+  lisSourceFiles: (period) => client.get('/lis/source-files', { params: { period } }).then((r) => r.data),
+  deleteLisSourceFile: (sf) => client.delete(`/lis/source-file/${encodeURIComponent(sf)}`).then((r) => r.data),
   lisRaw: (period, limit = 300, skip = 0) => client.get('/lis/raw', { params: { period, limit, skip } }).then((r) => r.data),
+  lisImport: (fileList) => {
+    const fd = new FormData();
+    Array.from(fileList).forEach((f) => fd.append('files', f));
+    return client.post('/lis/import', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data);
+  },
   prf: (period) => client.get('/prf', { params: { period } }).then((r) => r.data),
+  createPrf: (body) => client.post('/prf', body).then((r) => r.data),
+  receivePrf: (id, body) => client.post(`/prf/${id}/terima`, body).then((r) => r.data),
+  deletePrf: (id) => client.delete(`/prf/${id}`).then((r) => r.data),
   penerimaan: (period) => client.get('/penerimaan', { params: { period } }).then((r) => r.data),
 };
 

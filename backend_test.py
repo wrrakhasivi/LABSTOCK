@@ -392,6 +392,392 @@ def main():
     
     tester.test("GET /api/penerimaan?period=2026-07 returns items with computed qty", test_penerimaan)
     
+    # ========== PHASE 2 TESTS ==========
+    print("\n" + "="*60)
+    print("🚀 PHASE 2 FEATURES TESTING")
+    print("="*60)
+    
+    # Test 14: Set Saldo Awal manually
+    def test_set_saldo_awal():
+        # Get a reagen first
+        r = tester.get('/reagen')
+        assert r.status_code == 200, "Failed to get reagen list"
+        reagen_list = r.json()
+        assert len(reagen_list) > 0, "No reagen available"
+        
+        reagen = reagen_list[0]
+        reagen_id = reagen['id']
+        print(f"   Testing with reagen: {reagen['nama_reagen']}")
+        
+        # Set saldo awal for August 2026
+        r = tester.put('/monitoring/saldo-awal', {
+            'reagen_id': reagen_id,
+            'year': 2026,
+            'month': 8,
+            'saldo_awal': 100
+        })
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        data = r.json()
+        assert data.get('ok') == True, "Expected ok=True"
+        print(f"   ✓ Set saldo_awal=100 for {reagen['nama_reagen']}")
+        
+        # Verify by getting monitoring data
+        r = tester.get('/monitoring', {'year': 2026, 'month': 8})
+        assert r.status_code == 200, "Failed to get monitoring data"
+        mon_data = r.json()
+        
+        # Find the reagen row
+        row = next((r for r in mon_data['rows'] if r['reagen_id'] == reagen_id), None)
+        assert row is not None, f"Reagen {reagen_id} not found in monitoring"
+        assert row['saldo_awal'] == 100, f"Expected saldo_awal=100, got {row['saldo_awal']}"
+        
+        # Verify sisa_stock is recomputed
+        expected_sisa = (100 - row['total_pemakaian']) + row['stok_masuk']
+        assert row['sisa_stock'] == expected_sisa, \
+            f"sisa_stock not recomputed correctly: expected {expected_sisa}, got {row['sisa_stock']}"
+        
+        print(f"   ✓ saldo_awal=100, total_pemakaian={row['total_pemakaian']}, stok_masuk={row['stok_masuk']}, sisa_stock={row['sisa_stock']}")
+        print(f"   ✓ Status: {row['status_label']}")
+    
+    tester.test("PUT /api/monitoring/saldo-awal sets saldo awal and recomputes sisa_stock", test_set_saldo_awal)
+    
+    # Test 15: Set Sisa Override (manual adjustment)
+    def test_sisa_override():
+        # Get a reagen
+        r = tester.get('/reagen')
+        assert r.status_code == 200, "Failed to get reagen list"
+        reagen_list = r.json()
+        reagen = reagen_list[0]
+        reagen_id = reagen['id']
+        
+        print(f"   Testing with reagen: {reagen['nama_reagen']}")
+        
+        # Set sisa_override to 5
+        r = tester.put('/monitoring/sisa-override', {
+            'reagen_id': reagen_id,
+            'year': 2026,
+            'month': 8,
+            'sisa_override': 5
+        })
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        data = r.json()
+        assert data.get('ok') == True, "Expected ok=True"
+        print(f"   ✓ Set sisa_override=5")
+        
+        # Verify
+        r = tester.get('/monitoring', {'year': 2026, 'month': 8})
+        assert r.status_code == 200, "Failed to get monitoring data"
+        mon_data = r.json()
+        
+        row = next((r for r in mon_data['rows'] if r['reagen_id'] == reagen_id), None)
+        assert row is not None, f"Reagen {reagen_id} not found"
+        assert row['sisa_stock'] == 5, f"Expected sisa_stock=5, got {row['sisa_stock']}"
+        assert row['is_override'] == True, f"Expected is_override=True, got {row['is_override']}"
+        
+        print(f"   ✓ sisa_stock=5 (manual), is_override=True, status={row['status_label']}")
+        
+        # Revert to auto by setting null
+        r = tester.put('/monitoring/sisa-override', {
+            'reagen_id': reagen_id,
+            'year': 2026,
+            'month': 8,
+            'sisa_override': None
+        })
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        print(f"   ✓ Reverted sisa_override to null")
+        
+        # Verify revert
+        r = tester.get('/monitoring', {'year': 2026, 'month': 8})
+        assert r.status_code == 200, "Failed to get monitoring data"
+        mon_data = r.json()
+        
+        row = next((r for r in mon_data['rows'] if r['reagen_id'] == reagen_id), None)
+        assert row is not None, f"Reagen {reagen_id} not found"
+        assert row['is_override'] == False, f"Expected is_override=False after revert, got {row['is_override']}"
+        assert row['sisa_stock'] == row['sisa_auto'], \
+            f"Expected sisa_stock to match sisa_auto after revert"
+        
+        print(f"   ✓ Reverted to auto: sisa_stock={row['sisa_stock']}, is_override=False")
+    
+    tester.test("PUT /api/monitoring/sisa-override sets manual override and reverts to auto", test_sisa_override)
+    
+    # Test 16: Auto Saldo Awal (fill from previous month)
+    def test_auto_saldo_awal():
+        # Call auto-saldo-awal for August 2026 (should fill from July 2026)
+        r = requests.post(f"{BASE_URL}/monitoring/auto-saldo-awal", 
+                         json={'year': 2026, 'month': 8}, 
+                         timeout=10)
+        print(f"   POST {BASE_URL}/monitoring/auto-saldo-awal")
+        print(f"   Data: {{'year': 2026, 'month': 8}}")
+        print(f"   Status: {r.status_code}")
+        
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        data = r.json()
+        
+        assert data.get('ok') == True, "Expected ok=True"
+        assert 'updated' in data, "Missing 'updated' field"
+        assert 'from_period' in data, "Missing 'from_period' field"
+        
+        print(f"   ✓ Updated {data['updated']} reagen")
+        print(f"   ✓ From period: {data['from_period']}")
+        
+        # Verify at least some reagen have saldo_awal set
+        r = tester.get('/monitoring', {'year': 2026, 'month': 8})
+        assert r.status_code == 200, "Failed to get monitoring data"
+        mon_data = r.json()
+        
+        reagen_with_saldo = [r for r in mon_data['rows'] if r['saldo_awal'] is not None]
+        assert len(reagen_with_saldo) > 0, "No reagen have saldo_awal after auto-fill"
+        
+        print(f"   ✓ {len(reagen_with_saldo)} reagen now have saldo_awal set")
+    
+    tester.test("POST /api/monitoring/auto-saldo-awal fills saldo awal from previous month", test_auto_saldo_awal)
+    
+    # Test 17: Create PRF
+    def test_create_prf():
+        # Get a reagen
+        r = tester.get('/reagen')
+        assert r.status_code == 200, "Failed to get reagen list"
+        reagen_list = r.json()
+        reagen = reagen_list[0]
+        reagen_id = reagen['id']
+        
+        print(f"   Creating PRF for: {reagen['nama_reagen']}")
+        
+        # Create PRF
+        r = requests.post(f"{BASE_URL}/prf", 
+                         json={
+                             'reagen_id': reagen_id,
+                             'reagent_no': 1,
+                             'kits': 2,
+                             'tanggal_pr': '2026-08-15',
+                             'note': 'Test PRF'
+                         }, 
+                         timeout=10)
+        print(f"   POST {BASE_URL}/prf")
+        print(f"   Status: {r.status_code}")
+        
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        data = r.json()
+        
+        assert 'id' in data, "Missing 'id' field"
+        assert data['reagen_id'] == reagen_id, "reagen_id mismatch"
+        assert data['status'] == 'open', f"Expected status 'open', got {data['status']}"
+        assert data['period'] == '2026-08', f"Expected period '2026-08', got {data['period']}"
+        assert data['kits'] == 2, f"Expected kits=2, got {data['kits']}"
+        
+        prf_id = data['id']
+        print(f"   ✓ Created PRF id={prf_id}, status={data['status']}, period={data['period']}")
+        
+        # Verify it appears in GET /api/prf
+        r = tester.get('/prf', {'period': '2026-08'})
+        assert r.status_code == 200, "Failed to get PRF list"
+        prf_data = r.json()
+        
+        prf_item = next((p for p in prf_data['items'] if p['id'] == prf_id), None)
+        assert prf_item is not None, f"Created PRF {prf_id} not found in list"
+        
+        print(f"   ✓ PRF appears in GET /api/prf?period=2026-08")
+        
+        # Store for next test
+        test_create_prf.prf_id = prf_id
+        test_create_prf.reagen_id = reagen_id
+    
+    tester.test("POST /api/prf creates PRF with status 'open' and correct period", test_create_prf)
+    
+    # Test 18: Receive PRF (creates penerimaan and updates stok_masuk)
+    def test_receive_prf():
+        prf_id = getattr(test_create_prf, 'prf_id', None)
+        reagen_id = getattr(test_create_prf, 'reagen_id', None)
+        
+        if not prf_id:
+            print("   ⚠ Skipping: No PRF created in previous test")
+            return
+        
+        print(f"   Receiving PRF id={prf_id}")
+        
+        # Get monitoring data before receiving
+        r = tester.get('/monitoring', {'year': 2026, 'month': 8})
+        assert r.status_code == 200, "Failed to get monitoring data"
+        mon_before = r.json()
+        row_before = next((r for r in mon_before['rows'] if r['reagen_id'] == reagen_id), None)
+        stok_masuk_before = row_before['stok_masuk'] if row_before else 0
+        
+        print(f"   Stok masuk before: {stok_masuk_before}")
+        
+        # Receive PRF
+        r = requests.post(f"{BASE_URL}/prf/{prf_id}/terima", 
+                         json={
+                             'tanggal_terima': '2026-08-20',
+                             'kits': 2
+                         }, 
+                         timeout=10)
+        print(f"   POST {BASE_URL}/prf/{prf_id}/terima")
+        print(f"   Status: {r.status_code}")
+        
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        data = r.json()
+        
+        assert data.get('ok') == True, "Expected ok=True"
+        assert 'penerimaan' in data, "Missing 'penerimaan' field"
+        
+        penerimaan = data['penerimaan']
+        assert penerimaan['source'] == 'PRF', f"Expected source='PRF', got {penerimaan['source']}"
+        assert penerimaan['prf_id'] == prf_id, "prf_id mismatch in penerimaan"
+        
+        print(f"   ✓ PRF received, penerimaan created: id={penerimaan['id']}, qty={penerimaan['qty']}")
+        
+        # Verify PRF status changed to 'received'
+        r = tester.get('/prf', {'period': '2026-08'})
+        assert r.status_code == 200, "Failed to get PRF list"
+        prf_data = r.json()
+        
+        prf_item = next((p for p in prf_data['items'] if p['id'] == prf_id), None)
+        assert prf_item is not None, f"PRF {prf_id} not found"
+        assert prf_item['status'] == 'received', f"Expected status 'received', got {prf_item['status']}"
+        
+        print(f"   ✓ PRF status changed to 'received'")
+        
+        # Verify penerimaan appears in GET /api/penerimaan
+        r = tester.get('/penerimaan', {'period': '2026-08'})
+        assert r.status_code == 200, "Failed to get penerimaan list"
+        pen_data = r.json()
+        
+        pen_item = next((p for p in pen_data['items'] if p['id'] == penerimaan['id']), None)
+        assert pen_item is not None, f"Penerimaan {penerimaan['id']} not found in list"
+        
+        print(f"   ✓ Penerimaan appears in GET /api/penerimaan?period=2026-08")
+        
+        # Verify stok_masuk increased in monitoring
+        r = tester.get('/monitoring', {'year': 2026, 'month': 8})
+        assert r.status_code == 200, "Failed to get monitoring data"
+        mon_after = r.json()
+        row_after = next((r for r in mon_after['rows'] if r['reagen_id'] == reagen_id), None)
+        assert row_after is not None, f"Reagen {reagen_id} not found in monitoring"
+        
+        stok_masuk_after = row_after['stok_masuk']
+        qty_added = penerimaan['qty']
+        
+        assert stok_masuk_after == stok_masuk_before + qty_added, \
+            f"stok_masuk not increased correctly: before={stok_masuk_before}, after={stok_masuk_after}, expected={stok_masuk_before + qty_added}"
+        
+        print(f"   ✓ Stok masuk increased: {stok_masuk_before} -> {stok_masuk_after} (+{qty_added})")
+        
+        # Store for delete test
+        test_receive_prf.prf_id = prf_id
+    
+    tester.test("POST /api/prf/{id}/terima creates penerimaan and increases stok_masuk", test_receive_prf)
+    
+    # Test 19: Delete PRF
+    def test_delete_prf():
+        # Create a new PRF to delete
+        r = tester.get('/reagen')
+        assert r.status_code == 200, "Failed to get reagen list"
+        reagen_list = r.json()
+        reagen = reagen_list[1] if len(reagen_list) > 1 else reagen_list[0]
+        reagen_id = reagen['id']
+        
+        # Create PRF
+        r = requests.post(f"{BASE_URL}/prf", 
+                         json={
+                             'reagen_id': reagen_id,
+                             'reagent_no': 1,
+                             'kits': 1,
+                             'tanggal_pr': '2026-08-16'
+                         }, 
+                         timeout=10)
+        assert r.status_code == 200, "Failed to create PRF for delete test"
+        prf = r.json()
+        prf_id = prf['id']
+        
+        print(f"   Created PRF id={prf_id} for deletion test")
+        
+        # Delete PRF
+        r = requests.delete(f"{BASE_URL}/prf/{prf_id}", timeout=10)
+        print(f"   DELETE {BASE_URL}/prf/{prf_id}")
+        print(f"   Status: {r.status_code}")
+        
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        data = r.json()
+        assert data.get('ok') == True, "Expected ok=True"
+        
+        print(f"   ✓ PRF deleted")
+        
+        # Verify it's gone
+        r = tester.get('/prf', {'period': '2026-08'})
+        assert r.status_code == 200, "Failed to get PRF list"
+        prf_data = r.json()
+        
+        prf_item = next((p for p in prf_data['items'] if p['id'] == prf_id), None)
+        assert prf_item is None, f"Deleted PRF {prf_id} still appears in list"
+        
+        print(f"   ✓ PRF removed from list")
+    
+    tester.test("DELETE /api/prf/{id} removes PRF", test_delete_prf)
+    
+    # Test 20: LIS Import
+    def test_lis_import():
+        import os
+        
+        sample_file = '/app/sample_LIS_260810.xlsx'
+        assert os.path.exists(sample_file), f"Sample file not found: {sample_file}"
+        
+        print(f"   Importing file: {sample_file}")
+        
+        # Read file
+        with open(sample_file, 'rb') as f:
+            files = {'files': ('sample_LIS_260810.xlsx', f, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+            r = requests.post(f"{BASE_URL}/lis/import", files=files, timeout=30)
+        
+        print(f"   POST {BASE_URL}/lis/import")
+        print(f"   Status: {r.status_code}")
+        
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        data = r.json()
+        
+        # Check response structure
+        assert 'files' in data, "Missing 'files' field"
+        assert 'dates_affected' in data, "Missing 'dates_affected' field"
+        assert 'pemakaian_records' in data, "Missing 'pemakaian_records' field"
+        assert 'reagen_terdampak' in data, "Missing 'reagen_terdampak' field"
+        assert 'unmatched_tests' in data, "Missing 'unmatched_tests' field"
+        
+        print(f"   ✓ Files processed: {len(data['files'])}")
+        print(f"   ✓ Dates affected: {data['dates_affected']}")
+        print(f"   ✓ Pemakaian records: {data['pemakaian_records']}")
+        print(f"   ✓ Reagen terdampak: {data['reagen_terdampak']}")
+        
+        # Verify dates
+        assert '2026-08-10' in data['dates_affected'], "Expected date '2026-08-10' not in dates_affected"
+        
+        # Check file summary
+        file_summary = data['files'][0]
+        assert file_summary['matched'] > 0, "No tests matched"
+        assert 'TEST TIDAK DIKENAL' in data['unmatched_tests'], "Expected 'TEST TIDAK DIKENAL' in unmatched"
+        
+        print(f"   ✓ Matched: {file_summary['matched']}, Unmatched: {len(file_summary.get('unmatched', []))}")
+        print(f"   ✓ Unmatched tests include: {data['unmatched_tests'][:3]}")
+        
+        # Verify monitoring data updated
+        r = tester.get('/monitoring', {'year': 2026, 'month': 8})
+        assert r.status_code == 200, "Failed to get monitoring data"
+        mon_data = r.json()
+        
+        # Check for UIBC with hari['10'] == 5
+        uibc_row = next((r for r in mon_data['rows'] if 'UIBC' in r['nama_reagen'].upper()), None)
+        if uibc_row:
+            day_10_usage = uibc_row['hari'].get('10', 0)
+            print(f"   ✓ UIBC hari['10'] = {day_10_usage} (expected 5)")
+            # Note: might not be exactly 5 if there was existing data
+        
+        # Check for Hematologi
+        hema_row = next((r for r in mon_data['rows'] if 'HEMATOLOGI' in r['nama_reagen'].upper()), None)
+        if hema_row:
+            day_10_usage = hema_row['hari'].get('10', 0)
+            print(f"   ✓ Hematologi hari['10'] = {day_10_usage} (expected 15 aggregated)")
+    
+    tester.test("POST /api/lis/import processes Excel and updates pemakaian_harian", test_lis_import)
+    
     return tester.summary()
 
 

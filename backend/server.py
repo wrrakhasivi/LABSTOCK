@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel, ConfigDict
 from starlette.middleware.cors import CORSMiddleware
 
@@ -15,6 +15,7 @@ from database import (
 from calculations import build_row, days_in_month, STATUS_LABEL
 from excel_analysis import EXCEL_SUMMARY
 from seeder import run_seed, is_seeded
+from lis_import import import_files as lis_import_files
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -118,11 +119,7 @@ async def update_reagen(reagen_id: str, payload: ReagenUpdate):
 
 
 # ---------- Monitoring (core) ----------
-@api.get('/monitoring')
-async def monitoring(year: int, month: int):
-    if month < 1 or month > 12:
-        raise HTTPException(400, 'Bulan tidak valid')
-
+async def _compute_monitoring(year: int, month: int):
     reagens = await reagen_col.find({}, {'_id': 0}).sort('nama_reagen', 1).to_list(3000)
 
     periods_docs = await stock_period_col.find(
@@ -183,7 +180,95 @@ async def monitoring(year: int, month: int):
     }
 
 
+@api.get('/monitoring')
+async def monitoring(year: int, month: int):
+    if month < 1 or month > 12:
+        raise HTTPException(400, 'Bulan tidak valid')
+    return await _compute_monitoring(year, month)
+
+
+async def _upsert_period_field(reagen_id: str, year: int, month: int, field: str, value):
+    """Set a single field on a (reagen, year, month) stock_period, creating it if needed."""
+    existing = await stock_period_col.find_one({'reagen_id': reagen_id, 'year': year, 'month': month})
+    if existing:
+        await stock_period_col.update_one(
+            {'reagen_id': reagen_id, 'year': year, 'month': month},
+            {'$set': {field: value}})
+    else:
+        import uuid
+        doc = {
+            'id': str(uuid.uuid4()), 'reagen_id': reagen_id, 'year': year, 'month': month,
+            'saldo_awal': None, 'qc': 0, 'buffer_override': None, 'sisa_override': None,
+            'created_at': datetime.now(timezone.utc).isoformat(),
+        }
+        doc[field] = value
+        await stock_period_col.insert_one(doc)
+
+
+class SaldoAwalUpdate(BaseModel):
+    reagen_id: str
+    year: int
+    month: int
+    saldo_awal: Optional[float] = None
+
+
+class SisaOverrideUpdate(BaseModel):
+    reagen_id: str
+    year: int
+    month: int
+    sisa_override: Optional[float] = None
+
+
+@api.put('/monitoring/saldo-awal')
+async def set_saldo_awal(payload: SaldoAwalUpdate):
+    """Manual edit of Saldo Awal for a reagen in a period."""
+    if payload.month < 1 or payload.month > 12:
+        raise HTTPException(400, 'Bulan tidak valid')
+    await _upsert_period_field(payload.reagen_id, payload.year, payload.month,
+                               'saldo_awal', payload.saldo_awal)
+    return {'ok': True}
+
+
+@api.put('/monitoring/sisa-override')
+async def set_sisa_override(payload: SisaOverrideUpdate):
+    """Manual adjustment (override) of Sisa Stok. Pass null to clear and revert to auto."""
+    if payload.month < 1 or payload.month > 12:
+        raise HTTPException(400, 'Bulan tidak valid')
+    await _upsert_period_field(payload.reagen_id, payload.year, payload.month,
+                               'sisa_override', payload.sisa_override)
+    return {'ok': True}
+
+
+class AutoSaldoBody(BaseModel):
+    year: int
+    month: int
+
+
+@api.post('/monitoring/auto-saldo-awal')
+async def auto_saldo_awal(payload: AutoSaldoBody):
+    """Isi Saldo Awal bulan ini otomatis = Sisa Stok bulan sebelumnya (per reagen)."""
+    year, month = payload.year, payload.month
+    if month < 1 or month > 12:
+        raise HTTPException(400, 'Bulan tidak valid')
+    prev_year, prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
+    prev = await _compute_monitoring(prev_year, prev_month)
+    updated = 0
+    for row in prev['rows']:
+        sisa = row.get('sisa_stock')
+        if sisa is None:
+            continue
+        await _upsert_period_field(row['reagen_id'], year, month, 'saldo_awal', sisa)
+        updated += 1
+    return {'ok': True, 'updated': updated,
+            'from_period': f'{MONTH_NAMES_ID[prev_month]} {prev_year}'}
+
+
 # ---------- Mapping & LIS (read-only in phase 1) ----------
+class MappingUpdate(BaseModel):
+    reagen_name: Optional[str] = None
+    status: Optional[str] = None
+
+
 @api.get('/mapping-tests')
 async def mapping_tests(status: Optional[str] = None):
     filt = {}
@@ -193,6 +278,22 @@ async def mapping_tests(status: Optional[str] = None):
     total = await mapping_col.count_documents({})
     ok = await mapping_col.count_documents({'status': 'OK'})
     return {'total': total, 'ok': ok, 'tidak_ada': total - ok, 'items': docs}
+
+
+@api.put('/mapping-tests/{mapping_id}')
+async def update_mapping(mapping_id: str, payload: MappingUpdate):
+    updates = {}
+    if payload.reagen_name is not None:
+        updates['reagen_name'] = payload.reagen_name or None
+    if payload.status is not None:
+        updates['status'] = payload.status
+    if not updates:
+        raise HTTPException(400, 'Tidak ada perubahan')
+    res = await mapping_col.update_one({'id': mapping_id}, {'$set': updates})
+    if res.matched_count == 0:
+        raise HTTPException(404, 'Pemetaan tidak ditemukan')
+    doc = await mapping_col.find_one({'id': mapping_id}, {'_id': 0})
+    return doc
 
 
 @api.get('/lis/raw')
@@ -207,7 +308,69 @@ async def lis_raw(period: Optional[str] = None, limit: int = 500, skip: int = 0)
     return {'total': total, 'periods': periods_list, 'items': docs}
 
 
+@api.post('/lis/import')
+async def lis_import(files: list[UploadFile] = File(...)):
+    """Import satu atau banyak file Excel LIS (nama file LIS_YYMMDD).
+
+    Otomatis mengisi pemakaian harian reagen via Mapping_Test dan
+    memperbarui Sisa Stok pada Pemantauan Stok.
+    """
+    if not files:
+        raise HTTPException(400, 'Tidak ada file diunggah')
+    payload = []
+    for f in files:
+        name = f.filename or 'file.xlsx'
+        if not name.lower().endswith(('.xlsx', '.xlsm')):
+            raise HTTPException(400, f'{name}: hanya file Excel (.xlsx) yang didukung')
+        content = await f.read()
+        payload.append((name, content))
+    summary = await lis_import_files(
+        payload, reagen_col, mapping_col, pemakaian_col, lis_raw_col, import_log_col)
+    return summary
+
+
+@api.get('/lis/source-files')
+async def lis_source_files(period: Optional[str] = None):
+    """Daftar source file LIS (untuk pengelolaan/hapus)."""
+    filt = {}
+    if period:
+        filt['period'] = period
+    pipeline = [
+        {'$match': filt},
+        {'$group': {'_id': '$source_file', 'tests': {'$sum': 1},
+                    'period': {'$first': '$period'}}},
+        {'$sort': {'_id': 1}},
+    ]
+    docs = await lis_raw_col.aggregate(pipeline).to_list(5000)
+    return [{'source_file': d['_id'], 'tests': d['tests'], 'period': d.get('period')}
+            for d in docs if d['_id']]
+
+
+@api.delete('/lis/source-file/{source_file}')
+async def delete_lis_source_file(source_file: str):
+    """Hapus semua data LIS mentah & pemakaian harian dari satu source file."""
+    raw_res = await lis_raw_col.delete_many({'source_file': source_file})
+    pem_res = await pemakaian_col.delete_many({'source_file': source_file})
+    if raw_res.deleted_count == 0 and pem_res.deleted_count == 0:
+        raise HTTPException(404, 'Source file tidak ditemukan')
+    return {'ok': True, 'lis_raw_dihapus': raw_res.deleted_count,
+            'pemakaian_dihapus': pem_res.deleted_count}
+
+
 # ---------- PRF & Penerimaan ----------
+class PRFCreate(BaseModel):
+    reagen_id: str
+    reagent_no: int = 1
+    kits: float = 1
+    tanggal_pr: str  # YYYY-MM-DD
+    note: Optional[str] = None
+
+
+class PRFReceive(BaseModel):
+    tanggal_terima: str  # YYYY-MM-DD
+    kits: Optional[float] = None  # override kits actually received
+
+
 @api.get('/prf')
 async def list_prf(period: Optional[str] = None):
     filt = {}
@@ -215,6 +378,84 @@ async def list_prf(period: Optional[str] = None):
         filt['period'] = period
     docs = await prf_col.find(filt, {'_id': 0}).sort('tanggal_pr', 1).to_list(5000)
     return {'total': len(docs), 'items': docs}
+
+
+@api.post('/prf')
+async def create_prf(payload: PRFCreate):
+    import uuid
+    reagen = await reagen_col.find_one({'id': payload.reagen_id}, {'_id': 0})
+    if not reagen:
+        raise HTTPException(404, 'Reagen tidak ditemukan')
+    if len(payload.tanggal_pr) < 7:
+        raise HTTPException(400, 'Tanggal PR tidak valid')
+    doc = {
+        'id': str(uuid.uuid4()),
+        'reagen_id': payload.reagen_id,
+        'reagen_name': reagen['nama_reagen'],
+        'period': payload.tanggal_pr[:7],
+        'tanggal_pr': payload.tanggal_pr,
+        'reagent_no': payload.reagent_no,
+        'kits': payload.kits,
+        'status': 'open',
+        'tanggal_terima': None,
+        'penerimaan_id': None,
+        'note': payload.note,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+    }
+    await prf_col.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@api.post('/prf/{prf_id}/terima')
+async def receive_prf(prf_id: str, payload: PRFReceive):
+    """Tandai PRF diterima -> otomatis membuat catatan Penerimaan (berkesinambungan)."""
+    import uuid
+    prf = await prf_col.find_one({'id': prf_id})
+    if not prf:
+        raise HTTPException(404, 'PRF tidak ditemukan')
+    if prf.get('status') == 'received':
+        raise HTTPException(400, 'PRF sudah diterima')
+    if len(payload.tanggal_terima) < 7:
+        raise HTTPException(400, 'Tanggal terima tidak valid')
+    reagen = await reagen_col.find_one({'id': prf['reagen_id']}, {'_id': 0})
+    qpk = (reagen or {}).get('qty_per_kit') or 0
+    kits = payload.kits if payload.kits is not None else prf.get('kits', 1)
+    pen_id = str(uuid.uuid4())
+    pen_doc = {
+        'id': pen_id,
+        'reagen_id': prf['reagen_id'],
+        'reagen_name': prf['reagen_name'],
+        'period': payload.tanggal_terima[:7],
+        'tanggal_terima': payload.tanggal_terima,
+        'reagent_no': prf.get('reagent_no'),
+        'kits': kits,
+        'qty': qpk * kits,
+        'prf_id': prf_id,
+        'source': 'PRF',
+        'note': prf.get('note'),
+        'created_at': datetime.now(timezone.utc).isoformat(),
+    }
+    await penerimaan_col.insert_one(pen_doc)
+    await prf_col.update_one({'id': prf_id}, {'$set': {
+        'status': 'received',
+        'tanggal_terima': payload.tanggal_terima,
+        'penerimaan_id': pen_id,
+    }})
+    pen_doc.pop('_id', None)
+    return {'ok': True, 'penerimaan': pen_doc}
+
+
+@api.delete('/prf/{prf_id}')
+async def delete_prf(prf_id: str):
+    prf = await prf_col.find_one({'id': prf_id})
+    if not prf:
+        raise HTTPException(404, 'PRF tidak ditemukan')
+    # remove linked penerimaan if any
+    if prf.get('penerimaan_id'):
+        await penerimaan_col.delete_one({'id': prf['penerimaan_id']})
+    await prf_col.delete_one({'id': prf_id})
+    return {'ok': True}
 
 
 @api.get('/penerimaan')

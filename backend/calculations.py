@@ -74,10 +74,17 @@ def build_row(reagen, period, daily_map, stok_masuk, prf_list, pen_list, year, m
     total_pemakaian = total_harian + (qc or 0)
     stok_masuk = stok_masuk or 0
 
-    sisa = None
+    # Auto-calculated sisa stok (from saldo awal, pemakaian, dan stok masuk)
+    sisa_auto = None
     if saldo_awal is not None:
-        sisa = (saldo_awal - total_pemakaian) + stok_masuk
+        sisa_auto = (saldo_awal - total_pemakaian) + stok_masuk
 
+    # Manual override untuk sisa stok (penyesuaian dari tim). Jika diisi,
+    # nilai ini menggantikan hasil perhitungan otomatis.
+    sisa_override = to_number((period or {}).get('sisa_override'))
+    is_override = sisa_override is not None
+
+    sisa = sisa_override if is_override else sisa_auto
     status = compute_status(sisa, buffer)
 
     return {
@@ -91,8 +98,11 @@ def build_row(reagen, period, daily_map, stok_masuk, prf_list, pen_list, year, m
         'saldo_awal': saldo_awal,
         'stok_masuk': stok_masuk,
         'sisa_stock': sisa,
+        'sisa_auto': sisa_auto,
+        'is_override': is_override,
         'saldo_akhir': sisa,
         'buffer_stock': buffer,
+        'has_period': period is not None,
         'status': status,
         'status_label': STATUS_LABEL[status],
         'prf': prf_list,
