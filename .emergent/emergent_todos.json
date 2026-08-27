@@ -1,0 +1,42 @@
+[
+  {
+    "content": "Analisis struktur Excel (blueprint) - selesai",
+    "status": "completed"
+  },
+  {
+    "content": "Dapatkan panduan desain dari design_agent",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: Backend - model MongoDB, seeder dari seed_data.json, import_log",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: Backend - service kalkulasi monitoring (rekonstruksi hari 1-31, sisa stok, status warna)",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: Backend - API dasar (health, excel-summary, reagen, monitoring, mapping, lis, prf, penerimaan)",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: Frontend - layout, routing, navigasi Bahasa Indonesia + design tokens",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: Frontend - halaman Pemantauan Stok (tabel 1-31 + status warna)",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: Frontend - Master Reagen, Data LIS, PRF, Penerimaan, Analisis Excel, Dashboard",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: Semua user stories tercakup dalam pengembangan",
+    "status": "completed"
+  },
+  {
+    "content": "Fase 1: End-to-End Testing menggunakan Testing Agent",
+    "status": "completed"
+  }
+]

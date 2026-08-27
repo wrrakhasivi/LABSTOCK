@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+}
+
+@layer base {
+    :root {
+        --background: 210 25% 98%;
+        --foreground: 222 47% 11%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 47% 11%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222 47% 11%;
+
+        --primary: 198 78% 28%;
+        --primary-foreground: 0 0% 100%;
+
+        --secondary: 210 20% 96%;
+        --secondary-foreground: 222 47% 11%;
+
+        --muted: 210 18% 94%;
+        --muted-foreground: 215 16% 40%;
+
+        --accent: 174 45% 92%;
+        --accent-foreground: 198 78% 18%;
+
+        --destructive: 0 72% 52%;
+        --destructive-foreground: 0 0% 100%;
+
+        --border: 214 20% 88%;
+        --input: 214 20% 88%;
+        --ring: 198 78% 28%;
+
+        --radius: 0.6rem;
+
+        --status-critical: 0 72% 52%;
+        --status-warning: 38 92% 50%;
+        --status-safe: 152 55% 36%;
+        --status-neutral: 215 16% 40%;
+
+        --chart-1: 198 78% 32%;
+        --chart-2: 174 55% 40%;
+        --chart-3: 38 92% 50%;
+        --chart-4: 0 72% 52%;
+        --chart-5: 152 55% 36%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+}
+
+/* Numeric cells: aligned, mono digits */
+.num {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Sticky monitoring table helpers */
+.ls-scroll {
+    overflow: auto;
+}
+.ls-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background-color: hsl(var(--card));
+}
+.ls-sticky-col {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    background-color: hsl(var(--card));
+    box-shadow: 2px 0 0 0 hsl(var(--border));
+}
+.ls-scroll thead th.ls-sticky-col {
+    z-index: 40;
+}
+
+/* Zebra rows keep sticky col background in sync */
+.ls-row:nth-child(odd) {
+    background-color: hsl(var(--muted) / 0.35);
+}
+.ls-row:nth-child(odd) .ls-sticky-col {
+    background-color: hsl(210 18% 96%);
+}
+.ls-row:hover {
+    background-color: hsl(var(--accent) / 0.45);
+}
+.ls-row:hover .ls-sticky-col {
+    background-color: hsl(var(--accent) / 0.6);
+}
+
+/* status row tints */
+.ls-row-critical .ls-sticky-col { box-shadow: inset 3px 0 0 0 hsl(var(--status-critical)); }
+.ls-row-warning .ls-sticky-col { box-shadow: inset 3px 0 0 0 hsl(var(--status-warning)); }
+
+::-webkit-scrollbar { height: 10px; width: 10px; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(215 16% 70%); }
