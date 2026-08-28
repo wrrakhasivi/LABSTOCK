@@ -51,6 +51,23 @@ class ReagenCreate(BaseModel):
     satuan: Optional[str] = 'Pcs'
 
 
+# ---------- Helpers ----------
+async def _mapped_reagen_ids():
+    """Set id reagen yang memiliki minimal satu pemetaan status OK di Pemetaan Test.
+
+    Reagen tanpa pemetaan (belum dipetakan / TIDAK ADA) tidak dianggap termonitor
+    dan disembunyikan dari daftar Pemantauan Stok, Master Reagen, PRF, & Penerimaan.
+    """
+    names = await mapping_col.distinct('reagen_name',
+                                       {'status': 'OK', 'reagen_name': {'$ne': None}})
+    names = [n for n in names if n]
+    if not names:
+        return set()
+    docs = await reagen_col.find({'nama_reagen': {'$in': names}},
+                                 {'_id': 0, 'id': 1}).to_list(5000)
+    return {d['id'] for d in docs}
+
+
 # ---------- Meta ----------
 @api.get('/')
 async def root():
@@ -88,6 +105,8 @@ async def list_reagen(query: Optional[str] = None):
     if query:
         filt['nama_reagen'] = {'$regex': query, '$options': 'i'}
     docs = await reagen_col.find(filt, {'_id': 0}).sort('nama_reagen', 1).to_list(2000)
+    mapped = await _mapped_reagen_ids()
+    docs = [d for d in docs if d['id'] in mapped]
     return docs
 
 
@@ -121,6 +140,8 @@ async def update_reagen(reagen_id: str, payload: ReagenUpdate):
 # ---------- Monitoring (core) ----------
 async def _compute_monitoring(year: int, month: int):
     reagens = await reagen_col.find({}, {'_id': 0}).sort('nama_reagen', 1).to_list(3000)
+    mapped = await _mapped_reagen_ids()
+    reagens = [r for r in reagens if r['id'] in mapped]
 
     periods_docs = await stock_period_col.find(
         {'year': year, 'month': month}, {'_id': 0}).to_list(3000)
@@ -377,6 +398,8 @@ async def list_prf(period: Optional[str] = None):
     if period:
         filt['period'] = period
     docs = await prf_col.find(filt, {'_id': 0}).sort('tanggal_pr', 1).to_list(5000)
+    mapped = await _mapped_reagen_ids()
+    docs = [d for d in docs if d.get('reagen_id') in mapped]
     return {'total': len(docs), 'items': docs}
 
 
@@ -464,6 +487,8 @@ async def list_penerimaan(period: Optional[str] = None):
     if period:
         filt['period'] = period
     docs = await penerimaan_col.find(filt, {'_id': 0}).sort('tanggal_terima', 1).to_list(5000)
+    mapped = await _mapped_reagen_ids()
+    docs = [d for d in docs if d.get('reagen_id') in mapped]
     total_qty = sum((d.get('qty') or 0) for d in docs)
     return {'total': len(docs), 'total_qty': total_qty, 'items': docs}
 

@@ -778,6 +778,194 @@ def main():
     
     tester.test("POST /api/lis/import processes Excel and updates pemakaian_harian", test_lis_import)
     
+    # ========== PHASE 3 TESTS: Saldo Awal Aug 2026 & Mapping Filter ==========
+    print("\n" + "="*60)
+    print("🚀 PHASE 3 FEATURES TESTING")
+    print("="*60)
+    
+    # Test 21: Saldo Awal Agustus 2026 Import Verification
+    def test_saldo_awal_aug2026():
+        r = tester.get('/monitoring', {'year': 2026, 'month': 8})
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        data = r.json()
+        
+        # Verify total_reagen == 100
+        assert data['total_reagen'] == 100, \
+            f"Expected total_reagen=100, got {data['total_reagen']}"
+        print(f"   ✓ total_reagen = {data['total_reagen']}")
+        
+        # Verify counts sum to total_reagen
+        counts = data['counts']
+        counts_sum = counts['critical'] + counts['warning'] + counts['safe'] + counts['unknown']
+        assert counts_sum == data['total_reagen'], \
+            f"Counts sum ({counts_sum}) doesn't match total_reagen ({data['total_reagen']})"
+        print(f"   ✓ Counts sum = {counts_sum} (matches total_reagen)")
+        print(f"   ✓ Counts breakdown: {counts}")
+        
+        # Verify specific reagents have correct saldo_awal
+        expected_saldo = {
+            'Testosteron': 44,
+            'AFP': 38,
+            'Ca 15-3': 16,
+            'HBsAg': 56,
+            'Kit Elisa Quantiferon': 320
+        }
+        
+        for nama, expected_val in expected_saldo.items():
+            row = next((r for r in data['rows'] if nama.lower() in r['nama_reagen'].lower()), None)
+            assert row is not None, f"Reagent '{nama}' not found in monitoring data"
+            
+            saldo = row.get('saldo_awal')
+            assert saldo is not None, f"{nama}: saldo_awal is null (expected {expected_val})"
+            assert saldo == expected_val, \
+                f"{nama}: saldo_awal={saldo}, expected {expected_val}"
+            print(f"   ✓ {nama}: saldo_awal = {saldo}")
+        
+        # Verify all rows with has_period=true have non-null saldo_awal
+        null_saldo_count = 0
+        for row in data['rows']:
+            if row.get('has_period'):
+                if row.get('saldo_awal') is None:
+                    null_saldo_count += 1
+                    print(f"   ⚠ {row['nama_reagen']}: has_period=true but saldo_awal is null")
+        
+        if null_saldo_count > 0:
+            print(f"   ⚠ WARNING: {null_saldo_count} reagents with has_period=true have null saldo_awal")
+        else:
+            print(f"   ✓ All reagents with has_period=true have non-null saldo_awal")
+    
+    tester.test("Saldo Awal Agustus 2026 import verification", test_saldo_awal_aug2026)
+    
+    # Test 22: Mapping Filter - GET /api/reagen
+    def test_mapping_filter_reagen():
+        # Get OK-mapped reagent names
+        r = tester.get('/mapping-tests', {'status': 'OK'})
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        mapping_data = r.json()
+        
+        ok_mapped_names = set()
+        for item in mapping_data['items']:
+            if item.get('reagen_name'):
+                ok_mapped_names.add(item['reagen_name'])
+        
+        print(f"   ✓ Found {len(ok_mapped_names)} OK-mapped reagent names")
+        
+        # Get all reagents
+        r = tester.get('/reagen')
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        reagen_list = r.json()
+        
+        # Verify exactly 100 reagents
+        assert len(reagen_list) == 100, \
+            f"Expected exactly 100 reagents, got {len(reagen_list)}"
+        print(f"   ✓ GET /api/reagen returns exactly 100 items")
+        
+        # Verify all reagents are in OK-mapped set
+        unmapped_reagents = []
+        for reagen in reagen_list:
+            if reagen['nama_reagen'] not in ok_mapped_names:
+                unmapped_reagents.append(reagen['nama_reagen'])
+        
+        if unmapped_reagents:
+            print(f"   ❌ Found {len(unmapped_reagents)} reagents NOT in OK-mapped set:")
+            for name in unmapped_reagents[:10]:  # Show first 10
+                print(f"      - {name}")
+            assert False, f"{len(unmapped_reagents)} reagents are not OK-mapped but appear in /api/reagen"
+        else:
+            print(f"   ✓ All 100 reagents are in OK-mapped set")
+        
+        # Store for next tests
+        test_mapping_filter_reagen.ok_mapped_names = ok_mapped_names
+    
+    tester.test("Mapping filter: GET /api/reagen returns only OK-mapped reagents", test_mapping_filter_reagen)
+    
+    # Test 23: Mapping Filter - GET /api/monitoring
+    def test_mapping_filter_monitoring():
+        ok_mapped_names = getattr(test_mapping_filter_reagen, 'ok_mapped_names', None)
+        if not ok_mapped_names:
+            print("   ⚠ Skipping: OK-mapped names not available from previous test")
+            return
+        
+        r = tester.get('/monitoring', {'year': 2026, 'month': 8})
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        data = r.json()
+        
+        # Verify all rows are OK-mapped
+        unmapped_rows = []
+        for row in data['rows']:
+            if row['nama_reagen'] not in ok_mapped_names:
+                unmapped_rows.append(row['nama_reagen'])
+        
+        if unmapped_rows:
+            print(f"   ❌ Found {len(unmapped_rows)} unmapped reagents in monitoring:")
+            for name in unmapped_rows[:10]:
+                print(f"      - {name}")
+            assert False, f"{len(unmapped_rows)} unmapped reagents appear in /api/monitoring"
+        else:
+            print(f"   ✓ All {len(data['rows'])} monitoring rows are OK-mapped")
+    
+    tester.test("Mapping filter: GET /api/monitoring returns only OK-mapped reagents", test_mapping_filter_monitoring)
+    
+    # Test 24: Mapping Filter - GET /api/prf
+    def test_mapping_filter_prf():
+        ok_mapped_names = getattr(test_mapping_filter_reagen, 'ok_mapped_names', None)
+        if not ok_mapped_names:
+            print("   ⚠ Skipping: OK-mapped names not available from previous test")
+            return
+        
+        r = tester.get('/prf')
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        data = r.json()
+        
+        print(f"   ✓ Total PRF items: {data['total']}")
+        
+        # Verify all PRF items are OK-mapped
+        unmapped_prf = []
+        for item in data['items']:
+            reagen_name = item.get('reagen_name', '')
+            if reagen_name not in ok_mapped_names:
+                unmapped_prf.append(reagen_name)
+        
+        if unmapped_prf:
+            print(f"   ❌ Found {len(unmapped_prf)} unmapped reagents in PRF:")
+            for name in unmapped_prf[:10]:
+                print(f"      - {name}")
+            assert False, f"{len(unmapped_prf)} unmapped reagents appear in /api/prf"
+        else:
+            print(f"   ✓ All {data['total']} PRF items are OK-mapped")
+    
+    tester.test("Mapping filter: GET /api/prf returns only OK-mapped reagents", test_mapping_filter_prf)
+    
+    # Test 25: Mapping Filter - GET /api/penerimaan
+    def test_mapping_filter_penerimaan():
+        ok_mapped_names = getattr(test_mapping_filter_reagen, 'ok_mapped_names', None)
+        if not ok_mapped_names:
+            print("   ⚠ Skipping: OK-mapped names not available from previous test")
+            return
+        
+        r = tester.get('/penerimaan')
+        assert r.status_code == 200, f"Expected 200, got {r.status_code}"
+        data = r.json()
+        
+        print(f"   ✓ Total penerimaan items: {data['total']}")
+        
+        # Verify all penerimaan items are OK-mapped
+        unmapped_pen = []
+        for item in data['items']:
+            reagen_name = item.get('reagen_name', '')
+            if reagen_name not in ok_mapped_names:
+                unmapped_pen.append(reagen_name)
+        
+        if unmapped_pen:
+            print(f"   ❌ Found {len(unmapped_pen)} unmapped reagents in penerimaan:")
+            for name in unmapped_pen[:10]:
+                print(f"      - {name}")
+            assert False, f"{len(unmapped_pen)} unmapped reagents appear in /api/penerimaan"
+        else:
+            print(f"   ✓ All {data['total']} penerimaan items are OK-mapped")
+    
+    tester.test("Mapping filter: GET /api/penerimaan returns only OK-mapped reagents", test_mapping_filter_penerimaan)
+    
     return tester.summary()
 
 

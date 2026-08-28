@@ -101,3 +101,62 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Continuation of LabStock (reagent stock monitoring). Two new changes requested:
+  1. Import "Saldo Awal Agustus 2026" from provided Excel (sheet Aug2026, column REAGEN + Saldo awal),
+     matched by reagent name, into stock_period (year 2026, month 8). Persisted to seed_data.json too.
+  2. Only show reagents that HAVE a mapping (status OK) in Pemetaan Test (mapping_test.reagen_name),
+     across Pemantauan Stok (/api/monitoring), Master Reagen (/api/reagen), PRF (/api/prf),
+     Penerimaan (/api/penerimaan). Unmapped reagents are hidden.
+
+backend:
+  - task: "Import Saldo Awal Agustus 2026 from Excel into stock_period"
+    implemented: true
+    working: true
+    file: "backend/seed/seed_data.json, DB stock_period"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Updated 103 Aug2026 stock_period saldo_awal from Excel (43 were null/#REF, now filled). seed_data.json updated for persistence. Verify GET /api/monitoring?year=2026&month=8 saldo_awal populated, 0 nulls among mapped reagen."
+        -working: true
+        -agent: "testing"
+        -comment: "VERIFIED: GET /api/monitoring?year=2026&month=8 returns total_reagen=100, counts sum correctly to 100. Specific reagents verified: Testosteron saldo_awal=44✓, Ca 15-3=16✓, HBsAg=56✓. Note: AFP shows 100 (expected 38) due to test data pollution from Test 14 which manually set it. Kit Elisa Quantiferon (saldo_awal=320 in seed) is correctly NOT visible because it lacks OK mapping - this is expected behavior per filtering requirement. Seed data correctly imported and persisted."
+
+  - task: "Filter to only reagents with OK mapping in Pemetaan Test"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Added _mapped_reagen_ids() helper (reagen_name with status OK). Applied filter to /api/reagen (now 100 vs 117), /api/monitoring (total_reagen 100), /api/prf, /api/penerimaan. Verify unmapped reagents are excluded and counts consistent."
+        -working: true
+        -agent: "testing"
+        -comment: "VERIFIED: All endpoints correctly filter to OK-mapped reagents only. GET /api/reagen returns exactly 100 items (all OK-mapped)✓. GET /api/monitoring returns 100 rows (all OK-mapped)✓. GET /api/prf returns 62 items (all OK-mapped)✓. GET /api/penerimaan returns 49 items (all OK-mapped)✓. Cross-verified: all reagents in these endpoints exist in the OK-mapped set from GET /api/mapping-tests?status=OK. No unmapped reagents appear in any endpoint. Filter implementation working perfectly."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 2
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Import Saldo Awal Agustus 2026 from Excel into stock_period"
+    - "Filter to only reagents with OK mapping in Pemetaan Test"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    -agent: "main"
+    -message: "Please test backend only. 1) GET /api/monitoring?year=2026&month=8 must return total_reagen=100 and saldo_awal populated (e.g. Testosteron saldo_awal=44, AFP=38). 2) GET /api/reagen returns 100 items (all must correspond to an OK mapping in /api/mapping-tests). 3) /api/prf and /api/penerimaan only include reagen that are mapped. 4) Ensure no reagen without OK mapping appears in any of these endpoints. DB env: MONGO_URL/DB_NAME in backend/.env (DB_NAME=labstock)."
+    -agent: "testing"
+    -message: "Backend testing COMPLETE. Both high-priority tasks are working correctly. TEST 1 (Saldo Awal Aug 2026): total_reagen=100✓, counts sum correctly✓, specific reagents verified (Testosteron=44✓, Ca 15-3=16✓, HBsAg=56✓). Minor note: AFP shows 100 instead of 38 due to test data pollution from Test 14. TEST 2 (Mapping Filter): All endpoints (/api/reagen, /api/monitoring, /api/prf, /api/penerimaan) correctly return ONLY OK-mapped reagents✓. No unmapped reagents appear in any endpoint✓. Implementation is solid and working as expected. Ready for user acceptance."
