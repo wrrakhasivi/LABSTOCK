@@ -6,7 +6,7 @@ import requests
 import sys
 from typing import Dict, Any
 
-BASE_URL = "https://labstock-monitor.preview.emergentagent.com/api"
+BASE_URL = "https://project-next-31.preview.emergentagent.com/api"
 
 class LabStockTester:
     def __init__(self):
