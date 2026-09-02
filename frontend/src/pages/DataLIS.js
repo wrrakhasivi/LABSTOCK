@@ -169,11 +169,14 @@ function MappingTab() {
   const save = async () => {
     setSaving(true);
     try {
-      await api.updateMapping(editing.id, {
+      const res = await api.updateMapping(editing.id, {
         reagen_name: editing.reagen_name || '',
         status: editing.status,
       });
-      toast.success('Pemetaan diperbarui');
+      const s = res?.sync || res?.data?.sync;
+      if (s?.action === 'renamed') toast.success(`Master Reagen "${s.from}" diubah menjadi "${s.nama_reagen}"`);
+      else if (s?.action === 'created') toast.success(`Master Reagen baru "${s.nama_reagen}" dibuat`);
+      else toast.success('Pemetaan diperbarui');
       setEditing(null);
       load();
     } catch (e) {

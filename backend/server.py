@@ -1,5 +1,7 @@
 """LabStock backend – Sistem Pemantauan Stok Reagen Laboratorium PK."""
 import os
+import re
+import uuid
 import logging
 from datetime import datetime, timezone
 from typing import Optional
@@ -347,11 +349,64 @@ async def update_mapping(mapping_id: str, payload: MappingUpdate):
         updates['status'] = payload.status
     if not updates:
         raise HTTPException(400, 'Tidak ada perubahan')
-    res = await mapping_col.update_one({'id': mapping_id}, {'$set': updates})
-    if res.matched_count == 0:
+    old = await mapping_col.find_one({'id': mapping_id}, {'_id': 0})
+    if not old:
         raise HTTPException(404, 'Pemetaan tidak ditemukan')
+
+    new_name = (updates.get('reagen_name') or '').strip() or None
+    sync = None
+    if 'reagen_name' in updates and new_name:
+        updates['reagen_name'] = new_name
+        sync = await _sync_master_reagen(old.get('reagen_name'), new_name)
+        updates['status'] = 'OK'
+    elif 'reagen_name' in updates and not new_name:
+        updates['status'] = 'TIDAK ADA'
+
+    await mapping_col.update_one({'id': mapping_id}, {'$set': updates})
     doc = await mapping_col.find_one({'id': mapping_id}, {'_id': 0})
+    if sync:
+        doc['sync'] = sync
     return doc
+
+
+async def _sync_master_reagen(old_name, new_name):
+    """Ikuti nama reagen monitoring di Pemetaan Test ke Master Reagen.
+
+    - Nama baru sudah ada di master  -> cukup ditautkan.
+    - Nama lama ada di master & tidak dipakai pemetaan lain -> master di-rename
+      (riwayat stok/periode ikut karena terikat reagen_id).
+    - Selain itu -> buat master reagen baru (salin atribut dari reagen lama bila ada).
+    """
+    if old_name and old_name.strip().lower() == new_name.lower():
+        return None
+    exists = await reagen_col.find_one({'nama_reagen': re.compile(f'^{re.escape(new_name)}$', re.I)},
+                                       {'_id': 0})
+    if exists:
+        return {'action': 'linked', 'nama_reagen': exists['nama_reagen']}
+    old_doc = await reagen_col.find_one({'nama_reagen': old_name}, {'_id': 0}) if old_name else None
+    if old_doc:
+        others = await mapping_col.count_documents(
+            {'reagen_name': old_name, 'status': 'OK'})
+        if others <= 1:
+            await reagen_col.update_one({'id': old_doc['id']},
+                                        {'$set': {'nama_reagen': new_name}})
+            await mapping_col.update_many({'reagen_name': old_name},
+                                          {'$set': {'reagen_name': new_name}})
+            return {'action': 'renamed', 'from': old_name, 'nama_reagen': new_name}
+    new_doc = {
+        'id': str(uuid.uuid4()),
+        'nama_reagen': new_name,
+        'item_code': None,
+        'qty_per_kit': (old_doc or {}).get('qty_per_kit'),
+        'avg_2022': (old_doc or {}).get('avg_2022'),
+        'avg_2023': (old_doc or {}).get('avg_2023'),
+        'buffer_stock': (old_doc or {}).get('buffer_stock'),
+        'satuan': (old_doc or {}).get('satuan', 'Pcs'),
+        'aktif': True,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+    }
+    await reagen_col.insert_one(new_doc)
+    return {'action': 'created', 'nama_reagen': new_name}
 
 
 @api.get('/lis/raw')
