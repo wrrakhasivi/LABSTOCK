@@ -72,6 +72,18 @@ body {
 .ls-scroll {
     overflow: auto;
 }
+/* Kolom harian 1-31: lebar seragam & presisi, angka rata tengah + tabular */
+.ls-day-col {
+    width: 34px;
+    min-width: 34px;
+    max-width: 34px;
+    padding-left: 2px;
+    padding-right: 2px;
+    text-align: center;
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8125rem;
+}
 .ls-scroll thead th {
     position: sticky;
     top: 0;

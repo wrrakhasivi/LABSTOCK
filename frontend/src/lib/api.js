@@ -15,6 +15,7 @@ export const api = {
   createReagen: (body) => client.post('/reagen', body).then((r) => r.data),
   monitoring: (year, month) => client.get('/monitoring', { params: { year, month } }).then((r) => r.data),
   setSaldoAwal: (body) => client.put('/monitoring/saldo-awal', body).then((r) => r.data),
+  setQc: (body) => client.put('/monitoring/qc', body).then((r) => r.data),
   setSisaOverride: (body) => client.put('/monitoring/sisa-override', body).then((r) => r.data),
   autoSaldoAwal: (year, month) => client.post('/monitoring/auto-saldo-awal', { year, month }).then((r) => r.data),
   mappingTests: (status) => client.get('/mapping-tests', { params: { status } }).then((r) => r.data),

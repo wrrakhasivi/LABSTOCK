@@ -56,6 +56,35 @@ def _resolve_col_date(header, base_year, base_month):
     return None
 
 
+def _resolve_row_date(value, base_year, base_month):
+    """Turn a per-row 'Tanggal'/'Date' cell into 'YYYY-MM-DD' if possible.
+
+    Mendukung: objek tanggal Excel, string tanggal umum (2026-08-01, 01/08/2026,
+    01-08-2026, dll), atau sekadar angka hari (1..31) yang dilengkapi bulan/tahun
+    dari nama file.
+    """
+    if value is None:
+        return None
+    if isinstance(value, (datetime, date)):
+        return f'{value.year}-{value.month:02d}-{value.day:02d}'
+    s = str(value).strip()
+    if not s:
+        return None
+    for fmt in ('%Y-%m-%d', '%Y/%m/%d', '%d/%m/%Y', '%d-%m-%Y', '%m/%d/%Y',
+                '%d/%m/%y', '%d-%m-%y', '%Y-%m-%d %H:%M:%S', '%d %b %Y', '%d %B %Y'):
+        try:
+            dt = datetime.strptime(s, fmt)
+            return f'{dt.year}-{dt.month:02d}-{dt.day:02d}'
+        except ValueError:
+            continue
+    n = to_number(s)
+    if n is not None and base_year and base_month:
+        d = int(n)
+        if 1 <= d <= 31:
+            return f'{base_year}-{base_month:02d}-{d:02d}'
+    return None
+
+
 def parse_file(filename, content):
     """Parse a single Excel file. Returns (per_date_test, warnings).
 
@@ -87,10 +116,15 @@ def parse_file(filename, content):
                     cols['grup'] = j
                 elif c in ('jumlah', 'total', 'qty', 'quantity', 'jml'):
                     cols['jumlah'] = j
+                elif c in ('tanggal', 'tgl', 'date', 'tanggal periksa', 'tgl periksa',
+                           'tanggal hasil', 'tgl hasil', 'tanggal order', 'tgl order',
+                           'tanggal pemeriksaan'):
+                    cols['tanggal'] = j
             # date/day columns = remaining columns with numeric/date headers
             date_cols = {}
             for j, raw in enumerate(row):
-                if j in (cols.get('test'), cols.get('grup'), cols.get('jumlah')):
+                if j in (cols.get('test'), cols.get('grup'), cols.get('jumlah'),
+                         cols.get('tanggal')):
                     continue
                 resolved = _resolve_col_date(raw, year, month)
                 if resolved:
@@ -113,10 +147,11 @@ def parse_file(filename, content):
         per_date[d][test] = per_date[d].get(test, 0) + j
 
     use_date_cols = bool(cols.get('date_cols'))
+    tanggal_col = cols.get('tanggal')
     base_date = f'{year}-{month:02d}-{day:02d}' if (year and month and day) else None
 
-    if not use_date_cols and base_date is None:
-        return {}, [f'{filename}: tanggal tidak diketahui (gunakan nama file LIS_YYMMDD atau kolom tanggal)']
+    if not use_date_cols and tanggal_col is None and base_date is None:
+        return {}, [f'{filename}: tanggal tidak diketahui (gunakan nama file LIS_YYMMDD, kolom Tanggal, atau kolom hari 1-31)']
 
     for row in rows[header_idx + 1:]:
         if row is None:
@@ -126,9 +161,24 @@ def parse_file(filename, content):
         if not test or _norm(test) in ('total', 'grand total', 'jumlah', 'nama test'):
             continue
         if use_date_cols:
+            # Format matriks: satu kolom per hari (1..31)
             for j, d in cols['date_cols'].items():
                 if j < len(row):
                     add(d, test, row[j])
+        elif tanggal_col is not None:
+            # Format transaksi: setiap baris punya kolom Tanggal sendiri
+            raw_date = row[tanggal_col] if tanggal_col < len(row) else None
+            d = _resolve_row_date(raw_date, year, month) or base_date
+            jcol = cols.get('jumlah')
+            val = row[jcol] if (jcol is not None and jcol < len(row)) else None
+            if val is None:
+                for k in range(len(row)):
+                    if k in (cols.get('test'), cols.get('grup'), tanggal_col):
+                        continue
+                    if to_number(row[k]) is not None:
+                        val = row[k]
+                        break
+            add(d, test, val)
         else:
             jcol = cols.get('jumlah')
             val = row[jcol] if (jcol is not None and jcol < len(row)) else None

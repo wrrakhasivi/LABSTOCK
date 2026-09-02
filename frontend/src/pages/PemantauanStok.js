@@ -124,14 +124,12 @@ export default function PemantauanStok() {
     } catch (e) { toast.error('Gagal menyimpan saldo awal'); }
   };
 
-  const saveSisa = async (row, value) => {
+  const saveQc = async (row, value) => {
     try {
-      await api.setSisaOverride({ reagen_id: row.reagen_id, year, month, sisa_override: value });
-      toast.success(value === null
-        ? `Sisa stok "${row.nama_reagen}" kembali ke perhitungan otomatis`
-        : `Sisa stok "${row.nama_reagen}" disesuaikan manual`);
+      await api.setQc({ reagen_id: row.reagen_id, year, month, qc: value });
+      toast.success(`QC "${row.nama_reagen}" diperbarui`);
       load();
-    } catch (e) { toast.error('Gagal menyimpan sisa stok'); }
+    } catch (e) { toast.error('Gagal menyimpan QC'); }
   };
 
   const runAuto = async () => {
@@ -228,12 +226,12 @@ export default function PemantauanStok() {
                     </th>
                     <th className="border-b px-2 py-2 text-right whitespace-nowrap" title="Klik nilai untuk edit manual, atau gunakan tombol Saldo Awal Otomatis">Saldo Awal ✎</th>
                     {dayCols.map((d) => (
-                      <th key={d} className="border-b px-1 py-2 text-center w-10">{d}</th>
+                      <th key={d} className="ls-day-col border-b py-2">{d}</th>
                     ))}
-                    <th className="border-b border-l px-2 py-2 text-right">QC</th>
+                    <th className="border-b border-l px-2 py-2 text-right whitespace-nowrap" title="Input manual QC (klik untuk edit)">QC ✎</th>
                     <th className="border-b px-2 py-2 text-right">Total Pakai</th>
                     <th className="border-b px-2 py-2 text-right">Stok Masuk</th>
-                    <th className="border-b px-2 py-2 text-right whitespace-nowrap" title="Otomatis dari perhitungan; klik untuk penyesuaian manual">Sisa Stok ✎</th>
+                    <th className="border-b px-2 py-2 text-right whitespace-nowrap" title="Otomatis: (Saldo Awal - Total Pemakaian) + Stok Masuk">Sisa Stok</th>
                     <th className="border-b px-2 py-2 text-right">Buffer</th>
                     <th className="border-b px-2 py-2 text-left">Satuan</th>
                     <th className="border-b px-2 py-2 text-center min-w-[110px]">Status</th>
@@ -252,24 +250,25 @@ export default function PemantauanStok() {
                       {dayCols.map((d) => {
                         const v = r.hari?.[String(d)] || 0;
                         return (
-                          <td key={d} className={`num border-b px-1 py-1.5 text-right ${v ? '' : 'text-muted-foreground/40'}`}>{v || ''}</td>
+                          <td key={d} className={`ls-day-col border-b py-1.5 ${v ? '' : 'text-muted-foreground/40'}`}>{v || ''}</td>
                         );
                       })}
-                      <td className="num border-b border-l px-2 py-1.5 text-right">{fmtNum(r.qc)}</td>
+                      <EditableNumber
+                        value={r.qc}
+                        onSave={(v) => saveQc(r, v)}
+                        testid={`qc-${r.reagen_id}`}
+                        alignCls="text-right border-l"
+                        title="Klik untuk input manual QC"
+                      />
                       <td className="num border-b px-2 py-1.5 text-right font-semibold">{fmtNum(r.total_pemakaian)}</td>
                       <td className="num border-b px-2 py-1.5 text-right">{fmtNum(r.stok_masuk)}</td>
-                      <EditableNumber
-                        value={r.sisa_stock}
-                        onSave={(v) => saveSisa(r, v)}
-                        testid={`sisa-stok-${r.reagen_id}`}
-                        valueCls={`font-semibold ${r.status === 'critical' ? 'text-red-700' : ''}`}
-                        title={r.is_override
-                          ? `Nilai manual. Otomatis = ${r.sisa_auto ?? '-'}. Kosongkan untuk kembali ke otomatis.`
-                          : 'Klik untuk penyesuaian manual'}
-                        marker={r.is_override
-                          ? <span className="h-1.5 w-1.5 rounded-full bg-primary" title="Nilai manual" data-testid={`sisa-override-marker-${r.reagen_id}`} />
-                          : null}
-                      />
+                      <td
+                        className={`num border-b px-2 py-1.5 text-right font-semibold ${r.status === 'critical' ? 'text-red-700' : ''}`}
+                        data-testid={`sisa-stok-${r.reagen_id}`}
+                        title="Otomatis: (Saldo Awal - Total Pemakaian) + Stok Masuk"
+                      >
+                        {fmtNum(r.sisa_stock)}
+                      </td>
                       <td className="num border-b px-2 py-1.5 text-right text-muted-foreground">{fmtNum(r.buffer_stock)}</td>
                       <td className="border-b px-2 py-1.5 text-left text-xs text-muted-foreground">{r.satuan}</td>
                       <td className="border-b px-2 py-1.5 text-center"><StatusBadge status={r.status} /></td>
@@ -282,11 +281,11 @@ export default function PemantauanStok() {
           <div className="space-y-1 text-xs text-muted-foreground">
             <p className="flex items-center gap-1.5">
               <Info className="h-3.5 w-3.5" />
-              Menampilkan {rows.length} dari {data.total_reagen} reagen. Sisa Stok = (Saldo Awal - Total Pemakaian) + Stok Masuk. Status "Perlu Cek" = saldo awal belum tersedia.
+              Menampilkan {rows.length} dari {data.total_reagen} reagen. Kolom harian 1-31 bersumber dari file LIS via Pemetaan Test. Sisa Stok (otomatis) = (Saldo Awal - Total Pemakaian) + Stok Masuk. Status {'"Perlu Cek"'} = saldo awal belum tersedia.
             </p>
             <p className="flex items-center gap-1.5">
               <Pencil className="h-3 w-3" />
-              Kolom <b>Saldo Awal</b> & <b>Sisa Stok</b> dapat diklik untuk edit manual. Sisa Stok dengan titik biru = disesuaikan manual (kosongkan nilai untuk kembali ke otomatis). Tombol <b>Saldo Awal Otomatis</b> mengisi saldo awal dari sisa stok bulan sebelumnya.
+              Kolom <b>Saldo Awal</b> & <b>QC</b> dapat diklik untuk input manual. <b>Sisa Stok</b> dihitung otomatis (tidak dapat diubah manual). Tombol <b>Saldo Awal Otomatis</b> mengisi saldo awal dari sisa stok bulan sebelumnya.
             </p>
           </div>
         </>

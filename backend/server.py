@@ -148,16 +148,36 @@ async def _compute_monitoring(year: int, month: int):
     period_by_reagen = {p['reagen_id']: p for p in periods_docs}
 
     prefix = f'{year}-{month:02d}-'
-    pem_docs = await pemakaian_col.find(
-        {'date': {'$regex': f'^{prefix}'}}, {'_id': 0}).to_list(50000)
+    # Daily usage (kolom 1-31) bersumber dari LIS mentah -> Pemetaan Test (status OK)
+    # -> Pemantauan Stok. Dihitung dinamis agar perubahan pemetaan langsung tercermin.
+    ok_maps = await mapping_col.find(
+        {'status': 'OK', 'reagen_name': {'$ne': None}},
+        {'_id': 0, 'lis_name': 1, 'reagen_name': 1}).to_list(5000)
+    lis_to_reagen = {}
+    for m in ok_maps:
+        ln = (m.get('lis_name') or '').strip().lower()
+        if ln:
+            lis_to_reagen[ln] = (m.get('reagen_name') or '').strip()
+    name_to_id = {(r['nama_reagen'] or '').strip().lower(): r['id'] for r in reagens}
+
+    period_str = f'{year}-{month:02d}'
+    lis_docs = await lis_raw_col.find({'period': period_str}, {'_id': 0}).to_list(50000)
     daily_by_reagen = {}
-    for d in pem_docs:
-        try:
-            day = int(d['date'][8:10])
-        except (ValueError, KeyError):
+    for doc in lis_docs:
+        lname = (doc.get('nama_test') or '').strip().lower()
+        rname = lis_to_reagen.get(lname)
+        if not rname and lname in name_to_id:
+            rname = (doc.get('nama_test') or '').strip()
+        rid = name_to_id.get((rname or '').strip().lower()) if rname else None
+        if not rid:
             continue
-        daily_by_reagen.setdefault(d['reagen_id'], {})
-        daily_by_reagen[d['reagen_id']][day] = daily_by_reagen[d['reagen_id']].get(day, 0) + (d.get('jumlah') or 0)
+        dd = daily_by_reagen.setdefault(rid, {})
+        for day_str, jumlah in (doc.get('days') or {}).items():
+            try:
+                day = int(day_str)
+            except (ValueError, TypeError):
+                continue
+            dd[day] = dd.get(day, 0) + (jumlah or 0)
 
     period_str = f'{year}-{month:02d}'
     pen_docs = await penerimaan_col.find({'period': period_str}, {'_id': 0}).to_list(5000)
@@ -238,6 +258,23 @@ class SisaOverrideUpdate(BaseModel):
     year: int
     month: int
     sisa_override: Optional[float] = None
+
+
+class QcUpdate(BaseModel):
+    reagen_id: str
+    year: int
+    month: int
+    qc: Optional[float] = None
+
+
+@api.put('/monitoring/qc')
+async def set_qc(payload: QcUpdate):
+    """Input manual QC untuk sebuah reagen pada periode tertentu."""
+    if payload.month < 1 or payload.month > 12:
+        raise HTTPException(400, 'Bulan tidak valid')
+    await _upsert_period_field(payload.reagen_id, payload.year, payload.month,
+                               'qc', payload.qc or 0)
+    return {'ok': True}
 
 
 @api.put('/monitoring/saldo-awal')

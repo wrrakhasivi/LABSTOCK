@@ -85,6 +85,12 @@ function ImportTab() {
           <p className="font-medium text-foreground">Format nama file: <code className="num">LIS_YYMMDD</code></p>
           <p>Contoh: <code className="num">LIS_260802</code> = 2 Agustus 2026, <code className="num">LIS_260925</code> = 25 September 2026.</p>
           <p className="mt-1">Isi file: kolom <b>Nama Test</b> dan <b>Jumlah</b> (opsional <b>Grup</b>). Test dicocokkan ke reagen via Pemetaan Test (1 test = 1 pemakaian reagen).</p>
+          <p className="mt-1 font-medium text-foreground">Penempatan tanggal 1-31 fleksibel:</p>
+          <ul className="ml-4 list-disc space-y-0.5">
+            <li>Ada kolom <b>Tanggal</b> per baris → pemakaian mengikuti tanggal tiap baris (mis. file <code className="num">LIS_260831</code> untuk 1 bulan penuh).</li>
+            <li>Ada kolom hari <b>1-31</b> (format matriks) → tersebar otomatis ke tiap tanggal.</li>
+            <li>Tanpa keduanya → seluruh data memakai tanggal dari nama file.</li>
+          </ul>
         </div>
       </Card>
 
