@@ -129,7 +129,25 @@ def parse_file(filename, content):
                 resolved = _resolve_col_date(raw, year, month)
                 if resolved:
                     date_cols[j] = resolved
+            # Header 2 baris: baris berikutnya berisi nomor hari 1..31
+            # (mis. "Tanggal" merged di baris 1, angka hari di baris 2)
+            data_start = i + 1
+            if len(date_cols) < 3 and i + 1 < len(rows):
+                sub = rows[i + 1] or ()
+                sub_cols = {}
+                for j, raw in enumerate(sub):
+                    if j in (cols.get('test'), cols.get('grup'), cols.get('jumlah')):
+                        continue
+                    resolved = _resolve_col_date(raw, year, month)
+                    if resolved:
+                        sub_cols[j] = resolved
+                if len(sub_cols) >= 3:
+                    date_cols = sub_cols
+                    data_start = i + 2
+            if date_cols and cols.get('tanggal') in date_cols:
+                cols.pop('tanggal')
             cols['date_cols'] = date_cols
+            cols['data_start'] = data_start
             break
 
     if header_idx is None:
@@ -153,7 +171,7 @@ def parse_file(filename, content):
     if not use_date_cols and tanggal_col is None and base_date is None:
         return {}, [f'{filename}: tanggal tidak diketahui (gunakan nama file LIS_YYMMDD, kolom Tanggal, atau kolom hari 1-31)']
 
-    for row in rows[header_idx + 1:]:
+    for row in rows[cols['data_start']:]:
         if row is None:
             continue
         test = row[cols['test']] if cols['test'] < len(row) else None
