@@ -24,11 +24,15 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   otomatis rename master reagen (bila hanya dipakai 1 pemetaan), atau tautkan ke master yang sudah ada, atau buat
   master baru. Status otomatis OK bila nama diisi, TIDAK ADA bila kosong. Pemantauan Stok ikut nama baru.
 
+- Dukungan file `.xls` (xlrd) di import LIS; endpoint & input file menerima .xlsx/.xlsm/.xls.
+- Periode Bulan Baru: `POST /api/monitoring/periode-baru` {year, month} → buat bulan berikutnya (Des → Jan tahun
+  berikutnya), saldo_awal = sisa_stock bulan ini. Tombol + dialog konfirmasi di Pemantauan Stok, otomatis pindah
+  ke periode baru (PeriodContext.refreshPeriods).
+
 ## Backlog
 - P1: Halaman Notifikasi/Dashboard (daftar reagen Kritis & Waspada saat aplikasi dibuka).
-- P1: Buat Periode Bulan Baru (carry-over saldo_awal = sisa_stock bulan sebelumnya).
 - P2: Login & Peran (Petugas vs Koordinator).
-- P2: Dukungan file `.xls` (openpyxl hanya membaca `.xlsx`).
+- P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.
 
 ## Catatan
 - Testing agent backend menghapus `lis_raw`; setelah pakai testing agent, jalankan reseed (`POST /api/admin/reseed`).

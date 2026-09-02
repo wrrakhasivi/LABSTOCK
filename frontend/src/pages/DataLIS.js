@@ -62,11 +62,11 @@ function ImportTab() {
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Upload className="h-4 w-4 text-primary" /> Import File LIS (Excel)</div>
         <div className="rounded-lg border-2 border-dashed p-6 text-center">
           <FileSpreadsheet className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-2 text-sm text-muted-foreground">Pilih satu atau beberapa file Excel LIS. Bisa 1 hari, 3 hari, 7 hari, atau 1 bulan.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Pilih satu atau beberapa file Excel LIS (.xlsx / .xls). Bisa 1 hari, 3 hari, 7 hari, atau 1 bulan.</p>
           <input
             ref={inputRef}
             type="file"
-            accept=".xlsx,.xlsm"
+            accept=".xlsx,.xlsm,.xls"
             multiple
             onChange={onPick}
             data-testid="lis-file-input"

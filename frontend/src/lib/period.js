@@ -22,6 +22,8 @@ export const PeriodProvider = ({ children }) => {
     }).catch(() => setLoaded(true));
   }, []);
 
-  const value = { periods, year, month, setYear, setMonth, loaded };
+  const refreshPeriods = () => api.periods().then((data) => { setPeriods(data); return data; });
+
+  const value = { periods, year, month, setYear, setMonth, loaded, refreshPeriods };
   return <PeriodContext.Provider value={value}>{children}</PeriodContext.Provider>;
 };

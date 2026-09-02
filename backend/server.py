@@ -323,6 +323,29 @@ async def auto_saldo_awal(payload: AutoSaldoBody):
             'from_period': f'{MONTH_NAMES_ID[prev_month]} {prev_year}'}
 
 
+@api.post('/monitoring/periode-baru')
+async def buat_periode_baru(payload: AutoSaldoBody):
+    """Buat periode bulan berikutnya; Saldo Awal = Sisa Stok bulan ini (per reagen).
+
+    Desember -> Januari tahun berikutnya (tahun baru otomatis).
+    """
+    year, month = payload.year, payload.month
+    if month < 1 or month > 12:
+        raise HTTPException(400, 'Bulan tidak valid')
+    next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+    existed = await stock_period_col.count_documents({'year': next_year, 'month': next_month})
+    cur = await _compute_monitoring(year, month)
+    created = 0
+    for row in cur['rows']:
+        await _upsert_period_field(row['reagen_id'], next_year, next_month,
+                                   'saldo_awal', row.get('sisa_stock'))
+        created += 1
+    return {'ok': True, 'year': next_year, 'month': next_month,
+            'label': f'{MONTH_NAMES_ID[next_month]} {next_year}',
+            'reagen': created, 'already_existed': existed > 0,
+            'from_period': f'{MONTH_NAMES_ID[month]} {year}'}
+
+
 # ---------- Mapping & LIS (read-only in phase 1) ----------
 class MappingUpdate(BaseModel):
     reagen_name: Optional[str] = None
@@ -433,8 +456,8 @@ async def lis_import(files: list[UploadFile] = File(...)):
     payload = []
     for f in files:
         name = f.filename or 'file.xlsx'
-        if not name.lower().endswith(('.xlsx', '.xlsm')):
-            raise HTTPException(400, f'{name}: hanya file Excel (.xlsx) yang didukung')
+        if not name.lower().endswith(('.xlsx', '.xlsm', '.xls')):
+            raise HTTPException(400, f'{name}: hanya file Excel (.xlsx / .xls) yang didukung')
         content = await f.read()
         payload.append((name, content))
     summary = await lis_import_files(

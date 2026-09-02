@@ -1,13 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePeriod } from '../lib/period';
-import { api, fmtNum } from '../lib/api';
+import { api, fmtNum, MONTHS_ID } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Skeleton } from '../components/ui/skeleton';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Search, RefreshCw, Info, Wand2, Pencil, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, RefreshCw, Info, Wand2, Pencil, ArrowUpDown, ArrowUp, ArrowDown, CalendarPlus } from 'lucide-react';
 
 const FILTERS = [
   { key: 'all', label: 'Semua', cls: 'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground' },
@@ -76,14 +80,35 @@ function EditableNumber({ value, onSave, testid, alignCls = 'text-right', valueC
 }
 
 export default function PemantauanStok() {
-  const { year, month } = usePeriod();
+  const { year, month, setYear, setMonth, refreshPeriods } = usePeriod();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
   const [q, setQ] = useState('');
   const [autoLoading, setAutoLoading] = useState(false);
+  const [newPeriodOpen, setNewPeriodOpen] = useState(false);
+  const [newPeriodLoading, setNewPeriodLoading] = useState(false);
   const [sortDir, setSortDir] = useState('asc'); // 'asc' | 'desc' | null
+
+  const nextPeriod = month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 };
+  const nextLabel = `${MONTHS_ID[nextPeriod.month]} ${nextPeriod.year}`;
+
+  const runNewPeriod = async () => {
+    setNewPeriodLoading(true);
+    try {
+      const res = await api.buatPeriodeBaru(year, month);
+      toast.success(`Periode ${res.label} dibuat: saldo awal ${res.reagen} reagen diambil dari sisa stok ${res.from_period}`);
+      setNewPeriodOpen(false);
+      await refreshPeriods();
+      setYear(res.year);
+      setMonth(res.month);
+    } catch (e) {
+      toast.error('Gagal membuat periode baru');
+    } finally {
+      setNewPeriodLoading(false);
+    }
+  };
 
   const load = () => {
     setLoading(true);
@@ -167,6 +192,28 @@ export default function PemantauanStok() {
           <Button variant="outline" size="sm" onClick={runAuto} disabled={autoLoading} data-testid="auto-saldo-awal-button" title="Isi Saldo Awal = Sisa Stok bulan sebelumnya">
             <Wand2 className="mr-1.5 h-3.5 w-3.5" /> {autoLoading ? 'Memproses...' : 'Saldo Awal Otomatis'}
           </Button>
+          <AlertDialog open={newPeriodOpen} onOpenChange={setNewPeriodOpen}>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" data-testid="new-period-button" title={`Buat periode ${nextLabel}`}>
+                <CalendarPlus className="mr-1.5 h-3.5 w-3.5" /> Periode Bulan Baru
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent data-testid="new-period-dialog">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Buat periode {nextLabel}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Saldo Awal setiap reagen pada <b>{nextLabel}</b> akan diisi dari Sisa Stok <b>{data?.label || `${month}/${year}`}</b> saat ini.
+                  Jika periode {nextLabel} sudah ada, saldo awalnya akan ditimpa dengan nilai terbaru.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel data-testid="new-period-cancel">Batal</AlertDialogCancel>
+                <AlertDialogAction onClick={(e) => { e.preventDefault(); runNewPeriod(); }} disabled={newPeriodLoading} data-testid="new-period-confirm">
+                  {newPeriodLoading ? 'Memproses...' : `Buat ${nextLabel}`}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button variant="outline" size="sm" onClick={load} data-testid="pemantauan-reload-button">
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Muat Ulang
           </Button>

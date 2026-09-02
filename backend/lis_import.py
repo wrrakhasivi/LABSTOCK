@@ -85,6 +85,34 @@ def _resolve_row_date(value, base_year, base_month):
     return None
 
 
+def _read_rows(filename, content):
+    """Baca semua baris sheet pertama. Mendukung .xlsx/.xlsm (openpyxl) dan .xls (xlrd)."""
+    if filename.lower().endswith('.xls'):
+        import xlrd
+        book = xlrd.open_workbook(file_contents=content)
+        sh = book.sheet_by_index(0)
+        rows = []
+        for r in range(sh.nrows):
+            row = []
+            for c in range(sh.ncols):
+                cell = sh.cell(r, c)
+                v = cell.value
+                if cell.ctype == xlrd.XL_CELL_DATE:
+                    try:
+                        v = datetime(*xlrd.xldate_as_tuple(v, book.datemode))
+                    except Exception:  # noqa
+                        pass
+                elif cell.ctype == xlrd.XL_CELL_EMPTY or v == '':
+                    v = None
+                elif cell.ctype == xlrd.XL_CELL_NUMBER and float(v).is_integer():
+                    v = int(v)
+                row.append(v)
+            rows.append(tuple(row))
+        return rows
+    wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True)
+    return list(wb.active.iter_rows(values_only=True))
+
+
 def parse_file(filename, content):
     """Parse a single Excel file. Returns (per_date_test, warnings).
 
@@ -92,10 +120,7 @@ def parse_file(filename, content):
     """
     year, month, day = _parse_filename(filename)
     warnings = []
-    wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True)
-    ws = wb.active
-
-    rows = list(ws.iter_rows(values_only=True))
+    rows = _read_rows(filename, content)
     if not rows:
         return {}, ['File kosong']
 

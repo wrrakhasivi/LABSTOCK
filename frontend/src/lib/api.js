@@ -18,6 +18,7 @@ export const api = {
   setQc: (body) => client.put('/monitoring/qc', body).then((r) => r.data),
   setSisaOverride: (body) => client.put('/monitoring/sisa-override', body).then((r) => r.data),
   autoSaldoAwal: (year, month) => client.post('/monitoring/auto-saldo-awal', { year, month }).then((r) => r.data),
+  buatPeriodeBaru: (year, month) => client.post('/monitoring/periode-baru', { year, month }).then((r) => r.data),
   mappingTests: (status) => client.get('/mapping-tests', { params: { status } }).then((r) => r.data),
   updateMapping: (id, body) => client.put(`/mapping-tests/${id}`, body).then((r) => r.data),
   lisSourceFiles: (period) => client.get('/lis/source-files', { params: { period } }).then((r) => r.data),
