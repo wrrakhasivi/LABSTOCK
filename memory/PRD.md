@@ -63,6 +63,13 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   `/app/memory/test_credentials.md`. Tested: testing_agent iteration_3 – backend 25/25 pytest, frontend semua
   RBAC flow PASS.
 
+- **(2026-09-03) Bug Fix: Periode default setelah login**: `PeriodProvider` (frontend/src/lib/period.js) sebelumnya
+  override year/month ke periode terbaru di DB (`periods[0]`, bisa jadi Januari 2027 sisa testing), bukan tanggal
+  sistem sebenarnya. Fix: default year/month langsung dari `new Date()`, tidak lagi ditimpa oleh data DB.
+  `AppShell.js` PeriodSelector year dropdown juga diperbaiki agar selalu menyertakan tahun berjalan meski belum
+  ada data stock_period untuk tahun itu. Tested: testing_agent iteration_4 – frontend 100% PASS (verifikasi ulang
+  setelah logout/login, ganti bulan, KPI dashboard).
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.

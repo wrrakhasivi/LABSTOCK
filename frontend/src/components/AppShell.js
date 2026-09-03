@@ -94,8 +94,11 @@ const UserBadge = () => {
 
 const PeriodSelector = () => {
   const { periods, year, month, setYear, setMonth } = usePeriod();
-  const years = Array.from(new Set(periods.map((p) => p.year)));
-  const yearList = years.length ? years : [2026];
+  const currentYear = new Date().getFullYear();
+  const yearSet = new Set(periods.map((p) => p.year));
+  yearSet.add(currentYear);
+  yearSet.add(year);
+  const yearList = Array.from(yearSet).sort((a, b) => b - a);
   return (
     <div className="flex items-center gap-2">
       <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
