@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { api, fmtNum } from '../lib/api';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -10,7 +11,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
-import { TrendingUp, BarChart3, ListFilter } from 'lucide-react';
+import { TrendingUp, BarChart3, ListFilter, ChevronDown, Download } from 'lucide-react';
 
 const toISO = (d) => d.toISOString().slice(0, 10);
 
@@ -30,10 +31,46 @@ const TOOLTIP_STYLE = {
   color: 'hsl(var(--foreground))',
 };
 
+// Ekspor SVG grafik (recharts) menjadi file PNG, mengikuti warna tema aktif
+const downloadChartPng = (containerRef, filename) => {
+  const svgEl = containerRef.current?.querySelector('svg');
+  if (!svgEl) { toast.error('Grafik belum siap, coba lagi'); return; }
+  const rect = svgEl.getBoundingClientRect();
+  const clone = svgEl.cloneNode(true);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  const svgData = new XMLSerializer().serializeToString(clone);
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.onload = () => {
+    const scale = 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = rect.width * scale;
+    canvas.height = rect.height * scale;
+    const ctx = canvas.getContext('2d');
+    const cardHsl = getComputedStyle(document.documentElement).getPropertyValue('--card').trim();
+    ctx.fillStyle = cardHsl ? `hsl(${cardHsl})` : '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0, rect.width, rect.height);
+    URL.revokeObjectURL(url);
+    canvas.toBlob((blob) => {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      toast.success('Grafik diunduh sebagai PNG');
+    });
+  };
+  img.onerror = () => toast.error('Gagal mengekspor grafik');
+  img.src = url;
+};
+
 export default function Analitik() {
   const [reagenList, setReagenList] = useState([]);
   const [search, setSearch] = useState('');
   const [reagenId, setReagenId] = useState('all');
+  const [trendPopoverOpen, setTrendPopoverOpen] = useState(false);
   const [preset, setPreset] = useState('30d');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -42,6 +79,9 @@ export default function Analitik() {
   const [comparisonSearch, setComparisonSearch] = useState('');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const trendChartRef = useRef(null);
+  const comparisonChartRef = useRef(null);
 
   useEffect(() => { api.listReagen().then(setReagenList).catch(() => setReagenList([])); }, []);
 
@@ -66,9 +106,21 @@ export default function Analitik() {
     }
   };
 
+  const pickReagen = (id) => {
+    setReagenId(id);
+    setTrendPopoverOpen(false);
+    setSearch('');
+  };
+
   const toggleComparisonId = (id) => {
     setComparisonIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
+
+  const selectAllComparison = () => {
+    setComparisonIds((prev) => Array.from(new Set([...prev, ...comparisonFilteredList.map((r) => r.id)])));
+  };
+
+  const clearAllComparison = () => setComparisonIds([]);
 
   const { start, end } = useMemo(() => (
     preset === 'custom' ? { start: customStart, end: customEnd } : rangeFor(preset)
@@ -107,26 +159,53 @@ export default function Analitik() {
       <Card className="flex flex-wrap items-end gap-3 p-4" data-testid="analitik-filters">
         <div>
           <label className="mb-1 block text-xs font-medium text-muted-foreground">Reagen</label>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Cari reagen..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              data-testid="analitik-reagen-search"
-              className="w-36"
-            />
-            <Select value={reagenId} onValueChange={setReagenId}>
-              <SelectTrigger className="w-56" data-testid="analitik-reagen-select"><SelectValue /></SelectTrigger>
-              <SelectContent className="max-h-72">
-                <SelectItem value="all">Semua Reagen</SelectItem>
+          <Popover open={trendPopoverOpen} onOpenChange={setTrendPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-56 justify-between font-normal"
+                data-testid="analitik-reagen-select"
+              >
+                <span className="truncate">{selectedName}</span>
+                <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-2" align="start">
+              <Input
+                placeholder="Cari reagen..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                data-testid="analitik-reagen-search"
+                className="mb-2 h-8"
+                autoFocus
+              />
+              <div className="max-h-64 space-y-0.5 overflow-y-auto">
+                <button
+                  type="button"
+                  onClick={() => pickReagen('all')}
+                  data-testid="analitik-reagen-option-all"
+                  className={`block w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted ${reagenId === 'all' ? 'bg-accent font-medium text-accent-foreground' : ''}`}
+                >
+                  Semua Reagen
+                </button>
                 {filteredReagenList.length === 0 ? (
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground">Tidak ada reagen cocok</div>
+                  <p className="px-2 py-2 text-xs text-muted-foreground">Tidak ada reagen cocok</p>
                 ) : (
-                  filteredReagenList.map((r) => <SelectItem key={r.id} value={r.id}>{r.nama_reagen}</SelectItem>)
+                  filteredReagenList.map((r) => (
+                    <button
+                      type="button"
+                      key={r.id}
+                      onClick={() => pickReagen(r.id)}
+                      data-testid={`analitik-reagen-option-${r.id}`}
+                      className={`block w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-muted ${reagenId === r.id ? 'bg-accent font-medium text-accent-foreground' : ''}`}
+                    >
+                      {r.nama_reagen}
+                    </button>
+                  ))
                 )}
-              </SelectContent>
-            </Select>
-          </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-muted-foreground">Rentang Waktu</label>
@@ -154,8 +233,19 @@ export default function Analitik() {
       </Card>
 
       <Card className="p-4" data-testid="analitik-trend-chart">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-          <TrendingUp className="h-4 w-4 text-primary" /> Tren Pemakaian — {selectedName}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <TrendingUp className="h-4 w-4 text-primary" /> Tren Pemakaian — {selectedName}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid="analitik-trend-download-button"
+            onClick={() => downloadChartPng(trendChartRef, `tren-pemakaian-${selectedName.replace(/\s+/g, '-')}.png`)}
+            disabled={loading || trendData.length === 0}
+          >
+            <Download className="mr-1.5 h-3.5 w-3.5" /> Unduh PNG
+          </Button>
         </div>
         {loading ? (
           <Skeleton className="h-72 w-full" />
@@ -164,15 +254,17 @@ export default function Analitik() {
             Tidak ada data pemakaian pada rentang ini.
           </p>
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={trendData} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-              <XAxis dataKey="label" fontSize={11} stroke="hsl(var(--muted-foreground))" />
-              <YAxis fontSize={11} width={40} stroke="hsl(var(--muted-foreground))" />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [fmtNum(v), 'Pemakaian']} />
-              <Line type="monotone" dataKey="jumlah" name="Pemakaian" stroke="#0d9488" strokeWidth={2.5} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
+          <div ref={trendChartRef}>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={trendData} margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="label" fontSize={11} stroke="hsl(var(--muted-foreground))" />
+                <YAxis fontSize={11} width={40} stroke="hsl(var(--muted-foreground))" />
+                <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [fmtNum(v), 'Pemakaian']} />
+                <Line type="monotone" dataKey="jumlah" name="Pemakaian" stroke="#0d9488" strokeWidth={2.5} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </Card>
 
@@ -207,6 +299,24 @@ export default function Analitik() {
                     data-testid="analitik-comparison-search"
                     className="mb-2 h-8"
                   />
+                  <div className="mb-2 flex items-center justify-between text-xs">
+                    <button
+                      type="button"
+                      onClick={selectAllComparison}
+                      data-testid="analitik-comparison-select-all"
+                      className="font-medium text-primary hover:underline"
+                    >
+                      Ceklis Semua
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearAllComparison}
+                      data-testid="analitik-comparison-clear-all"
+                      className="font-medium text-destructive hover:underline"
+                    >
+                      Uncek Semua
+                    </button>
+                  </div>
                   <div className="max-h-56 space-y-1 overflow-y-auto">
                     {comparisonFilteredList.length === 0 ? (
                       <p className="px-1 py-2 text-xs text-muted-foreground">Tidak ada reagen cocok</p>
@@ -229,6 +339,15 @@ export default function Analitik() {
                 </PopoverContent>
               </Popover>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              data-testid="analitik-comparison-download-button"
+              onClick={() => downloadChartPng(comparisonChartRef, 'perbandingan-pemakaian-reagen.png')}
+              disabled={loading || comparisonData.length === 0}
+            >
+              <Download className="mr-1.5 h-3.5 w-3.5" /> Unduh PNG
+            </Button>
           </div>
         </div>
         {loading ? (
@@ -242,15 +361,17 @@ export default function Analitik() {
             Tidak ada data pemakaian pada rentang ini.
           </p>
         ) : (
-          <ResponsiveContainer width="100%" height={340}>
-            <BarChart data={comparisonData} layout="vertical" margin={{ left: 8, right: 24, top: 8, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-              <XAxis type="number" fontSize={11} stroke="hsl(var(--muted-foreground))" />
-              <YAxis type="category" dataKey="nama_reagen" width={150} fontSize={11} stroke="hsl(var(--muted-foreground))" />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [fmtNum(v), 'Total Pemakaian']} />
-              <Bar dataKey="jumlah" name="Total Pemakaian" fill="#f59e0b" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div ref={comparisonChartRef}>
+            <ResponsiveContainer width="100%" height={340}>
+              <BarChart data={comparisonData} layout="vertical" margin={{ left: 8, right: 24, top: 8, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                <XAxis type="number" fontSize={11} stroke="hsl(var(--muted-foreground))" />
+                <YAxis type="category" dataKey="nama_reagen" width={150} fontSize={11} stroke="hsl(var(--muted-foreground))" />
+                <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [fmtNum(v), 'Total Pemakaian']} />
+                <Bar dataKey="jumlah" name="Total Pemakaian" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </Card>
     </div>

@@ -7079,6 +7079,11 @@
       "lis_name": "HLA-B 27",
       "reagen": null,
       "status": "TIDAK ADA"
+    },
+    {
+      "lis_name": "Plasma Osmolality",
+      "reagen": "Elektrolit",
+      "status": "OK"
     }
   ],
   "LIS_Juli": [

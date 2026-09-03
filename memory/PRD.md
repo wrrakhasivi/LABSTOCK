@@ -112,6 +112,13 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   checkbox + search, termasuk isi 0 utk reagen tanpa pemakaian di rentang itu). Grafik batang independen dari
   pilihan Reagen di filter atas. Tested: testing_agent iteration_10 – backend 15/15 pytest, frontend 100% PASS.
 
+- **(2026-09-03) Penyempurnaan Analitik**: (1) Filter Reagen pada Tren Pemakaian diubah dari search+select
+  terpisah jadi 1 combobox popover tunggal (search di dalam dropdown, konsisten dgn gaya Perbandingan). (2)
+  Tombol "Ceklis Semua"/"Uncek Semua" di popover mode Custom Perbandingan (Ceklis Semua = pilih semua item
+  yang sedang terfilter search, Uncek Semua = bersihkan semua pilihan). (3) Tombol "Unduh PNG" di kedua grafik
+  (ekspor SVG→canvas→PNG client-side, background ikut tema aktif). Tested: testing_agent iteration_11 –
+  frontend 100% PASS (backend tidak berubah, iteration_10 tetap valid).
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.
