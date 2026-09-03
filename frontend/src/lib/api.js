@@ -26,6 +26,7 @@ export const api = {
   waSend: (year, month) => client.post('/notifikasi/whatsapp', { year, month }).then((r) => r.data),
   mappingTests: (status) => client.get('/mapping-tests', { params: { status } }).then((r) => r.data),
   updateMapping: (id, body) => client.put(`/mapping-tests/${id}`, body).then((r) => r.data),
+  createMapping: (body) => client.post('/mapping-tests', body).then((r) => r.data),
   lisSourceFiles: (period) => client.get('/lis/source-files', { params: { period } }).then((r) => r.data),
   deleteLisSourceFile: (sf) => client.delete(`/lis/source-file/${encodeURIComponent(sf)}`).then((r) => r.data),
   lisRaw: (period, limit = 300, skip = 0) => client.get('/lis/raw', { params: { period, limit, skip } }).then((r) => r.data),

@@ -189,7 +189,7 @@ backend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 6
+  test_sequence: 8
   run_ui: false
 
 test_plan:
@@ -219,3 +219,55 @@ frontend:
         -working: true
         -agent: "main"
         -comment: "Kolom hari 1-31: 34px -> 26px (padding 1px, font 0.75rem). Kolom QC/Total Pakai/Stok Masuk/Sisa Stok/Buffer/Satuan/Status pakai class .ls-sum-col (padding 6px, nowrap), header 2 baris, min-w Status dihapus. Lebar tabel 1860px -> 1610px, muat tanpa scroll horizontal di 1920px. Verified via screenshot. Note: backend/.env & frontend/.env hilang di environment, dipulihkan (MONGO_URL, DB_NAME=labstock, REACT_APP_BACKEND_URL)."
+
+backend:
+  - task: "POST /api/mapping-tests (tambah pemetaan) + persistensi pemetaan ke seed_data.json"
+    implemented: true
+    working: true
+    file: "backend/server.py, backend/seed_store.py, backend/seeder.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Baru: POST /api/mapping-tests {lis_name, reagen_name?} -> 201; lis_name wajib (400 jika kosong), unik case-insensitive (409 jika duplikat); reagen_name diisi -> status OK & master reagen dibuat/ditautkan (sync.action created/linked); kosong -> status TIDAK ADA. PUT /api/mapping-tests/{id} & POST kini juga menulis ke backend/seed/seed_data.json (Mapping_Test, Master_Extra, rename di semua sheet) via seed_store.py. Seeder membaca Master_Extra. Harap bersihkan data uji (hapus mapping_test & master_reagen uji dari DB, lalu `git checkout backend/seed/seed_data.json` TIDAK boleh dilakukan karena seed sudah disinkronkan; cukup hapus entri uji dari Mapping_Test/Master_Extra di seed_data.json)."
+        -working: true
+        -agent: "testing"
+        -comment: "VERIFIED: All 8 test scenarios PASSED✓. TEST 1 (POST new mapping+reagent): 201✓, status=OK✓, sync.action=created✓, reagen appears in GET /api/reagen✓, mapping appears in GET /api/mapping-tests✓. TEST 2 (Duplicate lis_name case-insensitive): 409✓. TEST 3 (Empty lis_name): 400✓. TEST 4 (POST without reagen_name): 201✓, status=TIDAK ADA✓, reagen_name=null✓. TEST 5 (POST with existing reagent 'vidas ca 15-3'): 201✓, sync.action=linked✓, reagen_name uses master spelling 'Vidas Ca 15-3'✓. TEST 6 (seed_data.json persistence): All 3 test mappings (LIS_1, LIS_2, LIS_3) persisted to Mapping_Test array✓, TEST_AGENT_REAGEN_1 persisted to Master_Extra array✓. TEST 7 (PUT rename reagent): 200✓, sync.action=renamed✓, seed_data.json updated (Mapping_Test reagen=TEST_AGENT_REAGEN_1B✓, Master_Extra has TEST_AGENT_REAGEN_1B✓, old TEST_AGENT_REAGEN_1 removed✓). TEST 8 (Monitoring filter): GET /api/monitoring?year=2026&month=9 returns 98 rows✓, all reagents have OK mapping✓, TEST_AGENT_REAGEN_1B appears in monitoring (correct)✓. CLEANUP COMPLETE: All test data removed from MongoDB (3 mapping_test docs, 1 master_reagen doc)✓ and seed_data.json (3 Mapping_Test entries, 1 Master_Extra entry)✓. Verified no test data remains in API endpoints✓. Feature working perfectly."
+
+  - task: "WhatsApp Notification API (GET preview & POST send)"
+    implemented: true
+    working: true
+    file: "backend/server.py, backend/whatsapp.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "testing"
+        -comment: "VERIFIED: WhatsApp notification backend feature working correctly. TEST 1 (GET /api/notifikasi/whatsapp/preview?year=2026&month=9): Returns 200✓, configured=true✓, recipient='6285876806380'✓, message contains 'KRITIS' and 'WASPADA'✓, critical=12 (int)✓, warning=15 (int)✓, last_sent populated with previous attempt✓. TEST 2 (POST /api/notifikasi/whatsapp): Backend correctly calls Meta API and gets expected error '(#131030) Recipient phone number not in allowed list'✓. This is EXTERNAL BLOCKER (Meta configuration), NOT a code bug✓. Error is logged to import_log with ok=false✓. Note: Response returns 502 which gets intercepted by Cloudflare HTML error page, but error details are preserved in import_log and accessible via preview endpoint. TEST 3 (GET preview after POST): last_sent updated with new log entry✓, shows ok=false✓, error info contains '#131030' and 'not in allowed list'✓. TEST 4 (Token leak check): WHATSAPP_ACCESS_TOKEN does NOT leak in any API response✓. Security verified. IMPORTANT: The #131030 error is expected and correct - it's Meta's external restriction requiring the recipient number to be added to the allowed list in Meta Business dashboard. Code implementation is working as designed."
+
+agent_communication:
+    -agent: "main"
+    -message: "Test backend saja: 1) POST /api/mapping-tests dengan lis_name baru + reagen_name baru -> 201, status OK, sync.action=created, GET /api/reagen memuat reagen baru. 2) POST duplikat lis_name (beda huruf besar/kecil) -> 409. 3) POST lis_name kosong -> 400. 4) POST tanpa reagen_name -> status TIDAK ADA. 5) Setelah 1), cek backend/seed/seed_data.json: Mapping_Test memuat lis_name baru, Master_Extra memuat reagen baru. 6) PUT rename reagen_name pada mapping uji -> seed_data.json ikut berubah. 7) GET /api/monitoring?year=2026&month=9 tetap hanya menampilkan reagen dengan pemetaan OK. PENTING: bersihkan data uji dari DB (mapping_test, master_reagen) DAN hapus entri uji dari seed_data.json (Mapping_Test & Master_Extra) tanpa git checkout."
+    -agent: "testing"
+    -message: "MAPPING TEST FEATURE TESTING COMPLETE (Test Sequence 7). All 8 test scenarios PASSED✓. Feature is working perfectly. SUMMARY: (1) POST new mapping with new reagent: Creates mapping with status=OK, sync.action=created, persists to both MongoDB and seed_data.json✓. (2) Duplicate lis_name validation: Correctly rejects with 409 (case-insensitive)✓. (3) Empty lis_name validation: Correctly rejects with 400✓. (4) POST without reagen_name: Creates mapping with status=TIDAK ADA, reagen_name=null✓. (5) POST with existing reagent: Links to existing master reagent (case-insensitive), uses master spelling, sync.action=linked✓. (6) seed_data.json persistence: All mappings persisted to Mapping_Test array, new reagents persisted to Master_Extra array✓. (7) PUT rename reagent: Renames reagent in both MongoDB and seed_data.json (Mapping_Test and Master_Extra), sync.action=renamed✓. (8) Monitoring filter: Only OK-mapped reagents appear in monitoring endpoint✓. CLEANUP: All test data successfully removed from MongoDB (3 mapping_test docs, 1 master_reagen doc) and seed_data.json (3 Mapping_Test entries, 1 Master_Extra entry)✓. Verified no test data remains in API endpoints✓. Ready for production."
+    -agent: "testing"
+    -message: "WHATSAPP NOTIFICATION TESTING COMPLETE (Test Sequence 8). All 4 test scenarios PASSED✓. Backend implementation is working correctly. SUMMARY: (1) GET /api/notifikasi/whatsapp/preview: Returns 200 with all required fields (configured=true, recipient='6285876806380', message with 'KRITIS' and 'WASPADA', critical=12, warning=15)✓. (2) POST /api/notifikasi/whatsapp: Backend correctly calls Meta WhatsApp Cloud API and receives expected error '#131030 Recipient phone number not in allowed list'✓. This is EXTERNAL BLOCKER from Meta (Test Number +1 555-197-3123 can only send to numbers in allowed list), NOT a code bug✓. Error is properly logged to import_log collection with ok=false✓. (3) GET preview after POST: last_sent field updated with new log entry showing ok=false and error details✓. (4) Token security: WHATSAPP_ACCESS_TOKEN does NOT leak in any API response✓. NOTE: POST returns 502 which gets intercepted by Cloudflare HTML error page, but this doesn't affect functionality - error details are preserved in import_log and accessible via preview endpoint's last_sent field. The #131030 error is expected and correct behavior given Meta's restrictions. Feature ready for production (will work when user adds recipient to Meta's allowed list)."
+
+backend:
+  - task: "Notifikasi WhatsApp via Meta Cloud API (kredensial terpasang)"
+    implemented: true
+    working: true
+    file: "backend/server.py, backend/whatsapp.py, backend/.env"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "testing"
+        -comment: "Token & Phone Number ID valid (Meta Test Number +1 555-197-3123). Kirim ditolak Meta #131030 (recipient 6285876806380 belum di allowed list) - blocker eksternal, bukan bug. Error tercatat di import_log, token tidak bocor."
+        -working: true
+        -agent: "main"
+        -comment: "Kode status gagal kirim diubah 502 -> 424 agar detail error tidak ditimpa halaman HTML Cloudflare; ditambah petunjuk cara menambahkan nomor di Meta. Diverifikasi via URL publik: HTTP 424 + detail utuh."

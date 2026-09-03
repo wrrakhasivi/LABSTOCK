@@ -124,6 +124,11 @@ export default function PemantauanStok() {
 
   const days = data?.days || 31;
   const dayCols = useMemo(() => Array.from({ length: days }, (_, i) => i + 1), [days]);
+  // Sorot kolom tanggal hari ini (hanya jika periode yang dilihat = bulan & tahun berjalan)
+  const now = new Date();
+  const shownYear = data?.year ?? year;
+  const shownMonth = data?.month ?? month;
+  const todayCol = now.getFullYear() === Number(shownYear) && now.getMonth() + 1 === Number(shownMonth) ? now.getDate() : null;
 
   const rows = useMemo(() => {
     if (!data) return [];
@@ -276,7 +281,7 @@ export default function PemantauanStok() {
                     </th>
                     <th className="border-b px-2 py-2 text-right whitespace-nowrap" title="Klik nilai untuk edit manual, atau gunakan tombol Saldo Awal Otomatis">Saldo Awal ✎</th>
                     {dayCols.map((d) => (
-                      <th key={d} className="ls-day-col border-b py-2">{d}</th>
+                      <th key={d} className={`ls-day-col border-b py-2 ${d === todayCol ? 'ls-today' : ''}`} title={d === todayCol ? 'Hari ini' : undefined} data-testid={d === todayCol ? 'today-col-header' : undefined}>{d}</th>
                     ))}
                     <th className="ls-sum-col border-b border-l py-2 text-right" title="Input manual QC (klik untuk edit)">QC ✎</th>
                     <th className="ls-sum-col border-b py-2 text-right">Total<br />Pakai</th>
@@ -300,7 +305,7 @@ export default function PemantauanStok() {
                       {dayCols.map((d) => {
                         const v = r.hari?.[String(d)] || 0;
                         return (
-                          <td key={d} className={`ls-day-col border-b py-1.5 ${v ? '' : 'text-muted-foreground/40'}`}>{v || ''}</td>
+                          <td key={d} className={`ls-day-col border-b py-1.5 ${v ? '' : 'text-muted-foreground/40'} ${d === todayCol ? 'ls-today' : ''}`}>{v || ''}</td>
                         );
                       })}
                       <EditableNumber

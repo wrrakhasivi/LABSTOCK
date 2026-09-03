@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from '../components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 import { toast } from 'sonner';
-import { Search, CheckCircle2, XCircle, Upload, FileSpreadsheet, AlertTriangle, Loader2, Pencil, Trash2, FileX } from 'lucide-react';
+import { Search, CheckCircle2, XCircle, Upload, FileSpreadsheet, AlertTriangle, Loader2, Pencil, Trash2, FileX, Plus } from 'lucide-react';
 
 export default function DataLIS() {
   const [tab, setTab] = useState('import');
@@ -149,13 +149,15 @@ function MappingTab() {
   const [reagenNames, setReagenNames] = useState([]);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [adding, setAdding] = useState(null); // { lis_name, reagen_name }
 
+  const loadReagenNames = () => api.listReagen().then((rs) => setReagenNames(rs.map((r) => r.nama_reagen))).catch(() => {});
   const load = () => {
     setLoading(true);
     api.mappingTests().then(setData).finally(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);
-  useEffect(() => { api.listReagen().then((rs) => setReagenNames(rs.map((r) => r.nama_reagen))).catch(() => {}); }, []);
+  useEffect(() => { loadReagenNames(); }, []);
 
   const items = useMemo(() => {
     if (!data) return [];
@@ -179,8 +181,34 @@ function MappingTab() {
       else toast.success('Pemetaan diperbarui');
       setEditing(null);
       load();
+      loadReagenNames();
     } catch (e) {
       toast.error('Gagal menyimpan pemetaan');
+    } finally { setSaving(false); }
+  };
+
+  const isDuplicateLis = (name) => {
+    const key = (name || '').trim().toLowerCase();
+    return !!key && (data?.items || []).some((m) => (m.lis_name || '').trim().toLowerCase() === key);
+  };
+
+  const create = async () => {
+    const lisName = (adding?.lis_name || '').trim();
+    if (!lisName) { toast.error('Nama Test (LIS) wajib diisi'); return; }
+    if (isDuplicateLis(lisName)) { toast.error(`Nama Test "${lisName}" sudah ada di Pemetaan Test`); return; }
+    setSaving(true);
+    try {
+      const res = await api.createMapping({ lis_name: lisName, reagen_name: (adding.reagen_name || '').trim() });
+      const s = res?.sync;
+      if (s?.action === 'created') toast.success(`Pemetaan ditambahkan. Master Reagen baru "${s.nama_reagen}" dibuat`);
+      else if (res?.status === 'OK') toast.success(`Pemetaan "${lisName}" → "${res.reagen_name}" ditambahkan`);
+      else toast.success(`Pemetaan "${lisName}" ditambahkan (belum ada reagen, status TIDAK ADA)`);
+      setAdding(null);
+      load();
+      loadReagenNames();
+    } catch (e) {
+      const msg = e?.response?.data?.detail;
+      toast.error(typeof msg === 'string' ? msg : 'Gagal menambahkan pemetaan');
     } finally { setSaving(false); }
   };
 
@@ -190,6 +218,9 @@ function MappingTab() {
         <Badge className="bg-emerald-600 text-white">OK: {data?.ok ?? 0}</Badge>
         <Badge className="bg-slate-500 text-white">TIDAK ADA: {data?.tidak_ada ?? 0}</Badge>
         <div className="ml-auto flex items-center gap-2">
+          <Button size="sm" onClick={() => setAdding({ lis_name: '', reagen_name: '' })} data-testid="mapping-add-button">
+            <Plus className="mr-1 h-4 w-4" /> Tambah Pemetaan
+          </Button>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Cari test LIS..." value={q} onChange={(e) => setQ(e.target.value)} className="h-9 w-[200px] pl-8" data-testid="mapping-search" />
@@ -243,6 +274,9 @@ function MappingTab() {
         )}
       </Card>
       <p className="text-xs text-muted-foreground">Menampilkan {items.length} pemetaan.</p>
+      <datalist id="reagen-names-list">
+        {reagenNames.map((n) => <option key={n} value={n} />)}
+      </datalist>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="sm:max-w-md">
@@ -263,9 +297,6 @@ function MappingTab() {
                   className="mt-1"
                   placeholder="Ketik / pilih nama reagen"
                 />
-                <datalist id="reagen-names-list">
-                  {reagenNames.map((n) => <option key={n} value={n} />)}
-                </datalist>
               </div>
               <div>
                 <Label className="text-xs">Status</Label>
@@ -282,6 +313,50 @@ function MappingTab() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>Batal</Button>
             <Button onClick={save} disabled={saving} data-testid="mapping-save-button">{saving ? 'Menyimpan...' : 'Simpan'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!adding} onOpenChange={(o) => !o && setAdding(null)}>
+        <DialogContent className="sm:max-w-md" data-testid="mapping-add-dialog">
+          <DialogHeader><DialogTitle>Tambah Pemetaan Test</DialogTitle></DialogHeader>
+          {adding && (
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs">Nama Test (LIS) <span className="text-red-600">*</span></Label>
+                <Input
+                  autoFocus
+                  data-testid="mapping-add-lis-name"
+                  value={adding.lis_name}
+                  onChange={(e) => setAdding({ ...adding, lis_name: e.target.value })}
+                  className="mt-1"
+                  placeholder="Nama test sesuai file LIS"
+                />
+                {isDuplicateLis(adding.lis_name) && (
+                  <p className="mt-1 text-xs text-red-600" data-testid="mapping-add-duplicate-warning">Nama Test ini sudah ada di Pemetaan Test.</p>
+                )}
+              </div>
+              <div>
+                <Label className="text-xs">Nama Reagen Monitoring</Label>
+                <Input
+                  list="reagen-names-list"
+                  data-testid="mapping-add-reagen"
+                  value={adding.reagen_name}
+                  onChange={(e) => setAdding({ ...adding, reagen_name: e.target.value })}
+                  className="mt-1"
+                  placeholder="Pilih dari daftar atau ketik nama reagen baru"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Nama baru otomatis dibuat di Master Reagen & tampil di Pemantauan Stok. Kosongkan jika belum ada reagen (status TIDAK ADA).
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdding(null)}>Batal</Button>
+            <Button onClick={create} disabled={saving || !adding?.lis_name?.trim() || isDuplicateLis(adding?.lis_name)} data-testid="mapping-add-save-button">
+              {saving ? 'Menyimpan...' : 'Tambah'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

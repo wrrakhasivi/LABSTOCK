@@ -1,401 +1,418 @@
-"""Backend test for LabStock LIS import bug fix - per-row Tanggal column."""
+#!/usr/bin/env python3
+"""
+Backend test for LabStock mapping_test feature.
+Tests POST /api/mapping-tests, PUT /api/mapping-tests/{id}, and seed_data.json persistence.
+"""
 import os
+import sys
+import json
 import requests
-import openpyxl
-from openpyxl import Workbook
-from datetime import datetime
+from pymongo import MongoClient
 
-# Backend URL from environment
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://stock-status-5.preview.emergentagent.com')
-API_BASE = f"{BACKEND_URL}/api"
+# Configuration
+BACKEND_URL = "https://stock-status-5.preview.emergentagent.com/api"
+MONGO_URL = "mongodb://localhost:27017"
+DB_NAME = "labstock"
+SEED_FILE = "/app/backend/seed/seed_data.json"
 
-print(f"Testing against: {API_BASE}")
+# Test data prefix
+TEST_PREFIX = "TEST_AGENT_"
 
-def create_excel_per_row_tanggal():
-    """TEST 1: Create Excel with per-row Tanggal column (the bug scenario)."""
-    wb = Workbook()
-    ws = wb.active
+def log(msg):
+    print(f"[TEST] {msg}")
+
+def load_seed_data():
+    """Load seed_data.json"""
+    with open(SEED_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+def save_seed_data(data):
+    """Save seed_data.json"""
+    with open(SEED_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def cleanup_mongodb():
+    """Clean up test data from MongoDB"""
+    log("Cleaning up MongoDB test data...")
+    client = MongoClient(MONGO_URL)
+    db = client[DB_NAME]
     
-    # Header row
-    ws.append(['Grup', 'Nama Test', 'Tanggal', 'Jumlah'])
+    # Delete test mappings
+    mapping_result = db.mapping_test.delete_many({"lis_name": {"$regex": f"^{TEST_PREFIX}", "$options": "i"}})
+    log(f"  Deleted {mapping_result.deleted_count} mapping_test documents")
     
-    # Data rows with different dates
-    ws.append(['Kimia', 'UIBC', datetime(2026, 8, 2), 4])
-    ws.append(['Kimia', 'UIBC', datetime(2026, 8, 9), 6])
-    ws.append(['Hema', 'Hematology Lengkap', datetime(2026, 8, 20), 5])
-    ws.append(['Hema', 'Hematology Lengkap', datetime(2026, 8, 27), 7])
+    # Find test reagents
+    test_reagents = list(db.master_reagen.find({"nama_reagen": {"$regex": f"^{TEST_PREFIX}", "$options": "i"}}, {"_id": 0, "id": 1}))
+    test_reagen_ids = [r["id"] for r in test_reagents]
+    log(f"  Found {len(test_reagen_ids)} test reagents")
     
-    filename = '/tmp/LIS_260831.xlsx'
-    wb.save(filename)
-    print(f"✓ Created {filename}")
-    return filename
-
-def create_excel_matrix_day_columns():
-    """TEST 2: Create Excel with matrix day-columns (regression test)."""
-    wb = Workbook()
-    ws = wb.active
+    # Delete stock_period entries for test reagents
+    if test_reagen_ids:
+        stock_result = db.stock_period.delete_many({"reagen_id": {"$in": test_reagen_ids}})
+        log(f"  Deleted {stock_result.deleted_count} stock_period documents")
     
-    # Header row: Nama Test | 1 | 2 | ... | 31
-    header = ['Nama Test'] + list(range(1, 32))
-    ws.append(header)
+    # Delete test reagents
+    reagen_result = db.master_reagen.delete_many({"nama_reagen": {"$regex": f"^{TEST_PREFIX}", "$options": "i"}})
+    log(f"  Deleted {reagen_result.deleted_count} master_reagen documents")
     
-    # Data row: UIBC with values only on days 5 and 12
-    row = ['UIBC'] + [None] * 31
-    row[5] = 3  # day 5 (index 5 in the row, which is column 6)
-    row[12] = 8  # day 12 (index 12 in the row, which is column 13)
-    ws.append(row)
+    client.close()
+
+def cleanup_seed_file():
+    """Clean up test data from seed_data.json"""
+    log("Cleaning up seed_data.json test data...")
+    data = load_seed_data()
     
-    filename = '/tmp/LIS_260830.xlsx'
-    wb.save(filename)
-    print(f"✓ Created {filename}")
-    return filename
-
-def create_excel_single_date_filename():
-    """TEST 3: Create Excel with single date from filename (regression test)."""
-    wb = Workbook()
-    ws = wb.active
+    # Clean Mapping_Test
+    original_mapping_count = len(data.get("Mapping_Test", []))
+    data["Mapping_Test"] = [m for m in data.get("Mapping_Test", []) 
+                            if not (m.get("lis_name") or "").upper().startswith(TEST_PREFIX)]
+    cleaned_mapping = original_mapping_count - len(data["Mapping_Test"])
+    log(f"  Removed {cleaned_mapping} Mapping_Test entries")
     
-    # Header row
-    ws.append(['Grup', 'Nama Test', 'Jumlah'])
+    # Clean Master_Extra
+    original_extra_count = len(data.get("Master_Extra", []))
+    data["Master_Extra"] = [r for r in data.get("Master_Extra", []) 
+                           if not (r.get("nama_reagen") or "").upper().startswith(TEST_PREFIX)]
+    cleaned_extra = original_extra_count - len(data["Master_Extra"])
+    log(f"  Removed {cleaned_extra} Master_Extra entries")
     
-    # Data row
-    ws.append(['Kimia', 'UIBC', 2])
+    save_seed_data(data)
+    log("  seed_data.json saved successfully")
+
+def verify_cleanup():
+    """Verify cleanup was successful"""
+    log("Verifying cleanup...")
     
-    filename = '/tmp/LIS_260803.xlsx'
-    wb.save(filename)
-    print(f"✓ Created {filename}")
-    return filename
-
-def import_lis_file(filepath):
-    """Import a LIS Excel file via POST /api/lis/import."""
-    filename = os.path.basename(filepath)
-    with open(filepath, 'rb') as f:
-        files = {'files': (filename, f, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
-        response = requests.post(f"{API_BASE}/lis/import", files=files)
-    
-    if response.status_code != 200:
-        print(f"✗ Import failed for {filename}: {response.status_code} - {response.text}")
-        return None
-    
-    result = response.json()
-    print(f"✓ Imported {filename}: {result.get('pemakaian_records', 0)} pemakaian records")
-    return result
-
-def get_monitoring(year, month):
-    """Get monitoring data for a specific period."""
-    response = requests.get(f"{API_BASE}/monitoring", params={'year': year, 'month': month})
-    if response.status_code != 200:
-        print(f"✗ Failed to get monitoring: {response.status_code} - {response.text}")
-        return None
-    return response.json()
-
-def get_source_files(period):
-    """Get list of source files for a period."""
-    response = requests.get(f"{API_BASE}/lis/source-files", params={'period': period})
-    if response.status_code != 200:
-        print(f"✗ Failed to get source files: {response.status_code} - {response.text}")
-        return None
-    return response.json()
-
-def delete_source_file(source_file):
-    """Delete a source file and its data."""
-    response = requests.delete(f"{API_BASE}/lis/source-file/{source_file}")
-    if response.status_code != 200:
-        print(f"✗ Failed to delete {source_file}: {response.status_code} - {response.text}")
-        return False
-    result = response.json()
-    print(f"✓ Deleted {source_file}: {result.get('lis_raw_dihapus', 0)} lis_raw, {result.get('pemakaian_dihapus', 0)} pemakaian")
-    return True
-
-def get_mapping_tests():
-    """Get mapping tests with status OK."""
-    response = requests.get(f"{API_BASE}/mapping-tests", params={'status': 'OK'})
-    if response.status_code != 200:
-        print(f"✗ Failed to get mapping tests: {response.status_code} - {response.text}")
-        return None
-    return response.json()
-
-def find_reagen_by_name(rows, name):
-    """Find a reagen row by name (case-insensitive)."""
-    name_lower = name.lower()
-    for row in rows:
-        if row.get('nama_reagen', '').lower() == name_lower:
-            return row
-    return None
-
-print("\n" + "="*80)
-print("LABSTOCK LIS IMPORT BUG FIX TEST")
-print("="*80)
-
-# First, verify mappings exist
-print("\n--- Verifying Mappings ---")
-mappings = get_mapping_tests()
-if mappings:
-    print(f"✓ Total OK mappings: {mappings.get('ok', 0)}")
-    items = mappings.get('items', [])
-    uibc_mapping = next((m for m in items if m.get('lis_name', '').lower() == 'uibc'), None)
-    hema_mapping = next((m for m in items if 'hematology lengkap' in m.get('lis_name', '').lower()), None)
-    
-    if uibc_mapping:
-        print(f"  - UIBC maps to: {uibc_mapping.get('reagen_name')}")
-    else:
-        print("  ⚠ UIBC mapping not found")
-    
-    if hema_mapping:
-        print(f"  - Hematology Lengkap maps to: {hema_mapping.get('reagen_name')}")
-    else:
-        print("  ⚠ Hematology Lengkap mapping not found")
-
-# Get initial state
-print("\n--- Initial State ---")
-initial_files = get_source_files('2026-08')
-if initial_files:
-    print(f"Initial source files for 2026-08: {len(initial_files)}")
-    for f in initial_files:
-        print(f"  - {f.get('source_file')}: {f.get('tests')} tests")
-
-# TEST 1: Per-row Tanggal column (the bug scenario)
-print("\n" + "="*80)
-print("TEST 1: Per-row Tanggal column (BUG FIX)")
-print("="*80)
-
-file1 = create_excel_per_row_tanggal()
-result1 = import_lis_file(file1)
-
-if result1:
-    print(f"\nImport summary:")
-    print(f"  - Files: {len(result1.get('files', []))}")
-    print(f"  - Dates affected: {result1.get('dates_affected', [])}")
-    print(f"  - Pemakaian records: {result1.get('pemakaian_records', 0)}")
-    print(f"  - Reagen affected: {result1.get('reagen_terdampak', 0)}")
-    if result1.get('unmatched_tests'):
-        print(f"  - Unmatched tests: {result1.get('unmatched_tests')}")
-
-# Verify monitoring data
-print("\n--- Verifying Monitoring Data ---")
-monitoring = get_monitoring(2026, 8)
-
-if monitoring:
-    print(f"Total reagen: {monitoring.get('total_reagen', 0)}")
-    rows = monitoring.get('rows', [])
-    
-    # Check UIBC
-    uibc = find_reagen_by_name(rows, 'UIBC')
-    if uibc:
-        hari = uibc.get('hari', {})
-        print(f"\nUIBC hari: {hari}")
-        
-        # Expected: day 2 = 4, day 9 = 6
-        day_2 = hari.get('2', 0)
-        day_9 = hari.get('9', 0)
-        day_31 = hari.get('31', 0)
-        
-        print(f"  - Day 2: {day_2} (expected: 4)")
-        print(f"  - Day 9: {day_9} (expected: 6)")
-        print(f"  - Day 31: {day_31} (should NOT be the only populated day)")
-        
-        # Check if values are on correct days
-        test1_pass = True
-        if day_2 < 4:
-            print(f"  ✗ FAIL: Day 2 should have at least 4 (got {day_2})")
-            test1_pass = False
-        if day_9 < 6:
-            print(f"  ✗ FAIL: Day 9 should have at least 6 (got {day_9})")
-            test1_pass = False
-        
-        # Check that not everything is on day 31
-        total_hari = sum(hari.values())
-        if total_hari > 0 and day_31 == total_hari:
-            print(f"  ✗ FAIL: All usage is on day 31 (bug not fixed)")
-            test1_pass = False
-        
-        if test1_pass:
-            print(f"  ✓ PASS: UIBC values are spread across correct days")
-    else:
-        print("  ✗ UIBC not found in monitoring data")
-        test1_pass = False
-    
-    # Check Hematologi
-    hematologi = find_reagen_by_name(rows, 'Hematologi')
-    if hematologi:
-        hari = hematologi.get('hari', {})
-        print(f"\nHematologi hari: {hari}")
-        
-        # Expected: day 20 = 5, day 27 = 7
-        day_20 = hari.get('20', 0)
-        day_27 = hari.get('27', 0)
-        day_31 = hari.get('31', 0)
-        
-        print(f"  - Day 20: {day_20} (expected: 5)")
-        print(f"  - Day 27: {day_27} (expected: 7)")
-        print(f"  - Day 31: {day_31} (should NOT be the only populated day)")
-        
-        if day_20 < 5:
-            print(f"  ✗ FAIL: Day 20 should have at least 5 (got {day_20})")
-            test1_pass = False
-        if day_27 < 7:
-            print(f"  ✗ FAIL: Day 27 should have at least 7 (got {day_27})")
-            test1_pass = False
-        
-        # Check that not everything is on day 31
-        total_hari = sum(hari.values())
-        if total_hari > 0 and day_31 == total_hari:
-            print(f"  ✗ FAIL: All usage is on day 31 (bug not fixed)")
-            test1_pass = False
-        
-        if test1_pass:
-            print(f"  ✓ PASS: Hematologi values are spread across correct days")
-    else:
-        print("  ✗ Hematologi not found in monitoring data")
-        test1_pass = False
-
-# TEST 2: Matrix day-columns (regression test)
-print("\n" + "="*80)
-print("TEST 2: Matrix day-columns (REGRESSION)")
-print("="*80)
-
-file2 = create_excel_matrix_day_columns()
-result2 = import_lis_file(file2)
-
-if result2:
-    print(f"\nImport summary:")
-    print(f"  - Dates affected: {result2.get('dates_affected', [])}")
-    print(f"  - Pemakaian records: {result2.get('pemakaian_records', 0)}")
-
-# Verify monitoring data
-print("\n--- Verifying Monitoring Data ---")
-monitoring2 = get_monitoring(2026, 8)
-
-if monitoring2:
-    rows = monitoring2.get('rows', [])
-    uibc = find_reagen_by_name(rows, 'UIBC')
-    
-    if uibc:
-        hari = uibc.get('hari', {})
-        print(f"\nUIBC hari after matrix import: {hari}")
-        
-        day_5 = hari.get('5', 0)
-        day_12 = hari.get('12', 0)
-        
-        print(f"  - Day 5: {day_5} (should include matrix value 3)")
-        print(f"  - Day 12: {day_12} (should include matrix value 8)")
-        
-        test2_pass = True
-        if day_5 < 3:
-            print(f"  ✗ FAIL: Day 5 should have at least 3 (got {day_5})")
-            test2_pass = False
-        if day_12 < 8:
-            print(f"  ✗ FAIL: Day 12 should have at least 8 (got {day_12})")
-            test2_pass = False
-        
-        if test2_pass:
-            print(f"  ✓ PASS: Matrix day-columns still work correctly")
-    else:
-        print("  ✗ UIBC not found in monitoring data")
-        test2_pass = False
-
-# TEST 3: Single date from filename (regression test)
-print("\n" + "="*80)
-print("TEST 3: Single date from filename (REGRESSION)")
-print("="*80)
-
-file3 = create_excel_single_date_filename()
-result3 = import_lis_file(file3)
-
-if result3:
-    print(f"\nImport summary:")
-    print(f"  - Dates affected: {result3.get('dates_affected', [])}")
-    print(f"  - Pemakaian records: {result3.get('pemakaian_records', 0)}")
-
-# Verify monitoring data
-print("\n--- Verifying Monitoring Data ---")
-monitoring3 = get_monitoring(2026, 8)
-
-if monitoring3:
-    rows = monitoring3.get('rows', [])
-    uibc = find_reagen_by_name(rows, 'UIBC')
-    
-    if uibc:
-        hari = uibc.get('hari', {})
-        print(f"\nUIBC hari after single-date import: {hari}")
-        
-        day_3 = hari.get('3', 0)
-        
-        print(f"  - Day 3: {day_3} (should include value 2 from filename date)")
-        
-        test3_pass = True
-        if day_3 < 2:
-            print(f"  ✗ FAIL: Day 3 should have at least 2 (got {day_3})")
-            test3_pass = False
+    # Check API endpoints
+    resp = requests.get(f"{BACKEND_URL}/mapping-tests")
+    if resp.status_code == 200:
+        items = resp.json().get("items", [])
+        test_items = [i for i in items if (i.get("lis_name") or "").upper().startswith(TEST_PREFIX)]
+        if test_items:
+            log(f"  ❌ WARNING: Found {len(test_items)} test mappings still in API")
         else:
-            print(f"  ✓ PASS: Single date from filename still works correctly")
-    else:
-        print("  ✗ UIBC not found in monitoring data")
-        test3_pass = False
-
-# CLEANUP
-print("\n" + "="*80)
-print("CLEANUP")
-print("="*80)
-
-print("\n--- Source files before cleanup ---")
-files_before = get_source_files('2026-08')
-if files_before:
-    for f in files_before:
-        print(f"  - {f.get('source_file')}: {f.get('tests')} tests")
-
-# Delete test files
-test_files = ['LIS_260831', 'LIS_260830', 'LIS_260803']
-deleted_count = 0
-
-for source_file in test_files:
-    # Check if this file was created by us (not seed data)
-    file_info = next((f for f in files_before if f.get('source_file') == source_file), None)
-    if file_info:
-        # Only delete if it's our test file
-        # We can identify our files by checking if they were just created
-        if delete_source_file(source_file):
-            deleted_count += 1
-
-print(f"\n✓ Deleted {deleted_count} test source files")
-
-print("\n--- Source files after cleanup ---")
-files_after = get_source_files('2026-08')
-if files_after:
-    for f in files_after:
-        print(f"  - {f.get('source_file')}: {f.get('tests')} tests")
-
-# Final verification
-print("\n--- Final Monitoring State ---")
-final_monitoring = get_monitoring(2026, 8)
-if final_monitoring:
-    rows = final_monitoring.get('rows', [])
-    uibc = find_reagen_by_name(rows, 'UIBC')
-    hematologi = find_reagen_by_name(rows, 'Hematologi')
+            log(f"  ✅ No test mappings in GET /api/mapping-tests")
     
-    if uibc:
-        print(f"\nUIBC final hari: {uibc.get('hari', {})}")
-    if hematologi:
-        print(f"Hematologi final hari: {hematologi.get('hari', {})}")
+    resp = requests.get(f"{BACKEND_URL}/reagen")
+    if resp.status_code == 200:
+        items = resp.json()
+        test_items = [i for i in items if (i.get("nama_reagen") or "").upper().startswith(TEST_PREFIX)]
+        if test_items:
+            log(f"  ❌ WARNING: Found {len(test_items)} test reagents still in API")
+        else:
+            log(f"  ✅ No test reagents in GET /api/reagen")
 
-# Summary
-print("\n" + "="*80)
-print("TEST SUMMARY")
-print("="*80)
+def run_tests():
+    """Run all test scenarios"""
+    log("=" * 80)
+    log("Starting LabStock Mapping Test Backend Tests")
+    log("=" * 80)
+    
+    results = []
+    test_mapping_id_1 = None
+    
+    # Test 1: POST new mapping with new reagent
+    log("\n[TEST 1] POST /api/mapping-tests with new lis_name + new reagen_name")
+    try:
+        payload = {"lis_name": "TEST_AGENT_LIS_1", "reagen_name": "TEST_AGENT_REAGEN_1"}
+        resp = requests.post(f"{BACKEND_URL}/mapping-tests", json=payload)
+        log(f"  Status: {resp.status_code}")
+        
+        if resp.status_code == 201:
+            data = resp.json()
+            test_mapping_id_1 = data.get("id")
+            log(f"  Response: {json.dumps(data, indent=2)}")
+            
+            # Verify response
+            checks = []
+            checks.append(("status == 'OK'", data.get("status") == "OK"))
+            checks.append(("reagen_name == 'TEST_AGENT_REAGEN_1'", data.get("reagen_name") == "TEST_AGENT_REAGEN_1"))
+            checks.append(("sync.action == 'created'", data.get("sync", {}).get("action") == "created"))
+            
+            # Verify in GET /api/reagen
+            resp_reagen = requests.get(f"{BACKEND_URL}/reagen")
+            if resp_reagen.status_code == 200:
+                reagents = resp_reagen.json()
+                found = any(r.get("nama_reagen") == "TEST_AGENT_REAGEN_1" for r in reagents)
+                checks.append(("Reagen in GET /api/reagen", found))
+            
+            # Verify in GET /api/mapping-tests
+            resp_mapping = requests.get(f"{BACKEND_URL}/mapping-tests")
+            if resp_mapping.status_code == 200:
+                mappings = resp_mapping.json().get("items", [])
+                found = any(m.get("lis_name") == "TEST_AGENT_LIS_1" for m in mappings)
+                checks.append(("Mapping in GET /api/mapping-tests", found))
+            
+            all_passed = all(c[1] for c in checks)
+            for check_name, passed in checks:
+                log(f"    {'✅' if passed else '❌'} {check_name}")
+            
+            results.append(("Test 1: POST new mapping + reagent", all_passed))
+        else:
+            log(f"  ❌ Expected 201, got {resp.status_code}: {resp.text}")
+            results.append(("Test 1: POST new mapping + reagent", False))
+    except Exception as e:
+        log(f"  ❌ Exception: {e}")
+        results.append(("Test 1: POST new mapping + reagent", False))
+    
+    # Test 2: POST duplicate lis_name (case-insensitive) -> 409
+    log("\n[TEST 2] POST /api/mapping-tests with duplicate lis_name (different case)")
+    try:
+        payload = {"lis_name": "test_agent_lis_1"}  # lowercase
+        resp = requests.post(f"{BACKEND_URL}/mapping-tests", json=payload)
+        log(f"  Status: {resp.status_code}")
+        
+        if resp.status_code == 409:
+            log(f"  ✅ Correctly rejected duplicate (409)")
+            results.append(("Test 2: Duplicate lis_name -> 409", True))
+        else:
+            log(f"  ❌ Expected 409, got {resp.status_code}: {resp.text}")
+            results.append(("Test 2: Duplicate lis_name -> 409", False))
+    except Exception as e:
+        log(f"  ❌ Exception: {e}")
+        results.append(("Test 2: Duplicate lis_name -> 409", False))
+    
+    # Test 3: POST empty lis_name -> 400
+    log("\n[TEST 3] POST /api/mapping-tests with empty lis_name")
+    try:
+        payload = {"lis_name": "   "}
+        resp = requests.post(f"{BACKEND_URL}/mapping-tests", json=payload)
+        log(f"  Status: {resp.status_code}")
+        
+        if resp.status_code == 400:
+            log(f"  ✅ Correctly rejected empty lis_name (400)")
+            results.append(("Test 3: Empty lis_name -> 400", True))
+        else:
+            log(f"  ❌ Expected 400, got {resp.status_code}: {resp.text}")
+            results.append(("Test 3: Empty lis_name -> 400", False))
+    except Exception as e:
+        log(f"  ❌ Exception: {e}")
+        results.append(("Test 3: Empty lis_name -> 400", False))
+    
+    # Test 4: POST without reagen_name -> status TIDAK ADA
+    log("\n[TEST 4] POST /api/mapping-tests without reagen_name")
+    try:
+        payload = {"lis_name": "TEST_AGENT_LIS_2"}
+        resp = requests.post(f"{BACKEND_URL}/mapping-tests", json=payload)
+        log(f"  Status: {resp.status_code}")
+        
+        if resp.status_code == 201:
+            data = resp.json()
+            log(f"  Response: {json.dumps(data, indent=2)}")
+            
+            checks = []
+            checks.append(("status == 'TIDAK ADA'", data.get("status") == "TIDAK ADA"))
+            checks.append(("reagen_name is null", data.get("reagen_name") is None))
+            
+            all_passed = all(c[1] for c in checks)
+            for check_name, passed in checks:
+                log(f"    {'✅' if passed else '❌'} {check_name}")
+            
+            results.append(("Test 4: POST without reagen_name", all_passed))
+        else:
+            log(f"  ❌ Expected 201, got {resp.status_code}: {resp.text}")
+            results.append(("Test 4: POST without reagen_name", False))
+    except Exception as e:
+        log(f"  ❌ Exception: {e}")
+        results.append(("Test 4: POST without reagen_name", False))
+    
+    # Test 5: POST with existing reagent (different case) -> linked
+    log("\n[TEST 5] POST /api/mapping-tests with existing reagent (case-insensitive)")
+    try:
+        # First, verify "Vidas Ca 15-3" exists in seed data
+        payload = {"lis_name": "TEST_AGENT_LIS_3", "reagen_name": "vidas ca 15-3"}  # lowercase
+        resp = requests.post(f"{BACKEND_URL}/mapping-tests", json=payload)
+        log(f"  Status: {resp.status_code}")
+        
+        if resp.status_code == 201:
+            data = resp.json()
+            log(f"  Response: {json.dumps(data, indent=2)}")
+            
+            checks = []
+            checks.append(("sync.action == 'linked'", data.get("sync", {}).get("action") == "linked"))
+            # Should use master spelling "Vidas Ca 15-3"
+            checks.append(("reagen_name uses master spelling", data.get("reagen_name") == "Vidas Ca 15-3"))
+            
+            all_passed = all(c[1] for c in checks)
+            for check_name, passed in checks:
+                log(f"    {'✅' if passed else '❌'} {check_name}")
+            
+            results.append(("Test 5: POST with existing reagent -> linked", all_passed))
+        else:
+            log(f"  ❌ Expected 201, got {resp.status_code}: {resp.text}")
+            results.append(("Test 5: POST with existing reagent -> linked", False))
+    except Exception as e:
+        log(f"  ❌ Exception: {e}")
+        results.append(("Test 5: POST with existing reagent -> linked", False))
+    
+    # Test 6: Verify seed_data.json persistence
+    log("\n[TEST 6] Verify seed_data.json contains test entries")
+    try:
+        data = load_seed_data()
+        
+        # Check Mapping_Test
+        mapping_test = data.get("Mapping_Test", [])
+        test_mappings = [m for m in mapping_test if (m.get("lis_name") or "").upper().startswith(TEST_PREFIX)]
+        log(f"  Found {len(test_mappings)} test mappings in seed_data.json")
+        
+        checks = []
+        # Should have TEST_AGENT_LIS_1, TEST_AGENT_LIS_2, TEST_AGENT_LIS_3
+        lis_1 = next((m for m in test_mappings if m.get("lis_name") == "TEST_AGENT_LIS_1"), None)
+        lis_2 = next((m for m in test_mappings if m.get("lis_name") == "TEST_AGENT_LIS_2"), None)
+        lis_3 = next((m for m in test_mappings if m.get("lis_name") == "TEST_AGENT_LIS_3"), None)
+        
+        checks.append(("TEST_AGENT_LIS_1 in Mapping_Test", lis_1 is not None))
+        if lis_1:
+            checks.append(("  LIS_1 reagen == TEST_AGENT_REAGEN_1", lis_1.get("reagen") == "TEST_AGENT_REAGEN_1"))
+            checks.append(("  LIS_1 status == OK", lis_1.get("status") == "OK"))
+        
+        checks.append(("TEST_AGENT_LIS_2 in Mapping_Test", lis_2 is not None))
+        if lis_2:
+            checks.append(("  LIS_2 reagen is null", lis_2.get("reagen") is None))
+            checks.append(("  LIS_2 status == TIDAK ADA", lis_2.get("status") == "TIDAK ADA"))
+        
+        checks.append(("TEST_AGENT_LIS_3 in Mapping_Test", lis_3 is not None))
+        
+        # Check Master_Extra
+        master_extra = data.get("Master_Extra", [])
+        test_reagents = [r for r in master_extra if (r.get("nama_reagen") or "").upper().startswith(TEST_PREFIX)]
+        log(f"  Found {len(test_reagents)} test reagents in Master_Extra")
+        
+        reagen_1 = next((r for r in test_reagents if r.get("nama_reagen") == "TEST_AGENT_REAGEN_1"), None)
+        checks.append(("TEST_AGENT_REAGEN_1 in Master_Extra", reagen_1 is not None))
+        
+        all_passed = all(c[1] for c in checks)
+        for check_name, passed in checks:
+            log(f"    {'✅' if passed else '❌'} {check_name}")
+        
+        results.append(("Test 6: seed_data.json persistence", all_passed))
+    except Exception as e:
+        log(f"  ❌ Exception: {e}")
+        results.append(("Test 6: seed_data.json persistence", False))
+    
+    # Test 7: PUT rename reagent
+    log("\n[TEST 7] PUT /api/mapping-tests/{id} to rename reagent")
+    try:
+        if not test_mapping_id_1:
+            log(f"  ⚠️  Skipping: test_mapping_id_1 not available")
+            results.append(("Test 7: PUT rename reagent", False))
+        else:
+            payload = {"reagen_name": "TEST_AGENT_REAGEN_1B"}
+            resp = requests.put(f"{BACKEND_URL}/mapping-tests/{test_mapping_id_1}", json=payload)
+            log(f"  Status: {resp.status_code}")
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                log(f"  Response: {json.dumps(data, indent=2)}")
+                
+                checks = []
+                checks.append(("sync.action == 'renamed'", data.get("sync", {}).get("action") == "renamed"))
+                
+                # Verify in seed_data.json
+                seed_data = load_seed_data()
+                mapping_test = seed_data.get("Mapping_Test", [])
+                lis_1 = next((m for m in mapping_test if m.get("lis_name") == "TEST_AGENT_LIS_1"), None)
+                if lis_1:
+                    checks.append(("seed Mapping_Test reagen == TEST_AGENT_REAGEN_1B", 
+                                  lis_1.get("reagen") == "TEST_AGENT_REAGEN_1B"))
+                
+                master_extra = seed_data.get("Master_Extra", [])
+                reagen_1b = next((r for r in master_extra if r.get("nama_reagen") == "TEST_AGENT_REAGEN_1B"), None)
+                reagen_1 = next((r for r in master_extra if r.get("nama_reagen") == "TEST_AGENT_REAGEN_1"), None)
+                checks.append(("seed Master_Extra has TEST_AGENT_REAGEN_1B", reagen_1b is not None))
+                checks.append(("seed Master_Extra no longer has TEST_AGENT_REAGEN_1", reagen_1 is None))
+                
+                all_passed = all(c[1] for c in checks)
+                for check_name, passed in checks:
+                    log(f"    {'✅' if passed else '❌'} {check_name}")
+                
+                results.append(("Test 7: PUT rename reagent", all_passed))
+            else:
+                log(f"  ❌ Expected 200, got {resp.status_code}: {resp.text}")
+                results.append(("Test 7: PUT rename reagent", False))
+    except Exception as e:
+        log(f"  ❌ Exception: {e}")
+        results.append(("Test 7: PUT rename reagent", False))
+    
+    # Test 8: Verify monitoring only shows OK-mapped reagents
+    log("\n[TEST 8] GET /api/monitoring?year=2026&month=9 - only OK-mapped reagents")
+    try:
+        resp_monitoring = requests.get(f"{BACKEND_URL}/monitoring?year=2026&month=9")
+        resp_mapping = requests.get(f"{BACKEND_URL}/mapping-tests?status=OK")
+        
+        if resp_monitoring.status_code == 200 and resp_mapping.status_code == 200:
+            monitoring_data = resp_monitoring.json()
+            mapping_data = resp_mapping.json()
+            
+            monitoring_rows = monitoring_data.get("rows", [])
+            ok_mappings = mapping_data.get("items", [])
+            ok_reagen_names = {m.get("reagen_name") for m in ok_mappings if m.get("reagen_name")}
+            
+            log(f"  Monitoring rows: {len(monitoring_rows)}")
+            log(f"  OK-mapped reagents: {len(ok_reagen_names)}")
+            
+            # Every reagent in monitoring should be in OK-mapped set
+            checks = []
+            unmapped_in_monitoring = []
+            for row in monitoring_rows:
+                reagen_name = row.get("nama_reagen")
+                if reagen_name not in ok_reagen_names:
+                    unmapped_in_monitoring.append(reagen_name)
+            
+            checks.append(("All monitoring reagents have OK mapping", len(unmapped_in_monitoring) == 0))
+            if unmapped_in_monitoring:
+                log(f"    ❌ Found {len(unmapped_in_monitoring)} unmapped reagents in monitoring:")
+                for name in unmapped_in_monitoring[:5]:  # Show first 5
+                    log(f"       - {name}")
+            
+            # Check if TEST_AGENT_REAGEN_1B appears (it should, as it has OK mapping)
+            test_reagen_in_monitoring = any(r.get("nama_reagen") == "TEST_AGENT_REAGEN_1B" for r in monitoring_rows)
+            log(f"    {'✅' if test_reagen_in_monitoring else '⚠️ '} TEST_AGENT_REAGEN_1B in monitoring (expected: yes)")
+            
+            all_passed = all(c[1] for c in checks)
+            for check_name, passed in checks:
+                log(f"    {'✅' if passed else '❌'} {check_name}")
+            
+            results.append(("Test 8: Monitoring shows only OK-mapped reagents", all_passed))
+        else:
+            log(f"  ❌ API calls failed: monitoring={resp_monitoring.status_code}, mapping={resp_mapping.status_code}")
+            results.append(("Test 8: Monitoring shows only OK-mapped reagents", False))
+    except Exception as e:
+        log(f"  ❌ Exception: {e}")
+        results.append(("Test 8: Monitoring shows only OK-mapped reagents", False))
+    
+    # Summary
+    log("\n" + "=" * 80)
+    log("TEST SUMMARY")
+    log("=" * 80)
+    for test_name, passed in results:
+        log(f"  {'✅' if passed else '❌'} {test_name}")
+    
+    total = len(results)
+    passed = sum(1 for _, p in results if p)
+    log(f"\nTotal: {passed}/{total} tests passed")
+    
+    return all(p for _, p in results)
 
-if test1_pass:
-    print("✓ TEST 1 PASSED: Per-row Tanggal column works correctly")
-else:
-    print("✗ TEST 1 FAILED: Per-row Tanggal column has issues")
-
-if test2_pass:
-    print("✓ TEST 2 PASSED: Matrix day-columns still work (regression)")
-else:
-    print("✗ TEST 2 FAILED: Matrix day-columns broken (regression)")
-
-if test3_pass:
-    print("✓ TEST 3 PASSED: Single date from filename still works (regression)")
-else:
-    print("✗ TEST 3 FAILED: Single date from filename broken (regression)")
-
-print("\n" + "="*80)
+if __name__ == "__main__":
+    try:
+        all_passed = run_tests()
+        
+        # Cleanup
+        log("\n" + "=" * 80)
+        log("CLEANUP")
+        log("=" * 80)
+        cleanup_mongodb()
+        cleanup_seed_file()
+        verify_cleanup()
+        
+        log("\n" + "=" * 80)
+        log("TESTING COMPLETE")
+        log("=" * 80)
+        
+        sys.exit(0 if all_passed else 1)
+    except Exception as e:
+        log(f"\n❌ FATAL ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

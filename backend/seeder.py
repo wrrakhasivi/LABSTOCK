@@ -70,6 +70,22 @@ async def run_seed(force=False):
                 rec['satuan'] = row['satuan']
             master[name] = rec
 
+    # 1b) Master_Extra: reagen yang dibuat pengguna lewat Pemetaan Test (persisted)
+    for row in data.get('Master_Extra', []):
+        name = (row.get('nama_reagen') or '').strip()
+        if not name:
+            continue
+        rec = master.get(name, {})
+        for f in ('qty_per_kit', 'avg_2022', 'avg_2023', 'buffer_stock'):
+            v = to_number(row.get(f))
+            if v is not None:
+                rec[f] = v
+        if row.get('satuan'):
+            rec['satuan'] = row['satuan']
+        if row.get('item_code'):
+            rec['item_code'] = row['item_code']
+        master[name] = rec
+
     reagen_docs = []
     for name, rec in master.items():
         rid = str(uuid.uuid4())
@@ -77,7 +93,7 @@ async def run_seed(force=False):
         reagen_docs.append({
             'id': rid,
             'nama_reagen': name,
-            'item_code': None,
+            'item_code': rec.get('item_code'),
             'qty_per_kit': rec.get('qty_per_kit'),
             'avg_2022': rec.get('avg_2022'),
             'avg_2023': rec.get('avg_2023'),

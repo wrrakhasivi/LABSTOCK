@@ -18,6 +18,7 @@ from database import (
 from calculations import build_row, days_in_month, STATUS_LABEL
 from excel_analysis import EXCEL_SUMMARY
 from seeder import run_seed, is_seeded
+import seed_store
 from lis_import import import_files as lis_import_files
 from export_excel import build_workbook
 import whatsapp as wa
@@ -423,7 +424,13 @@ async def wa_send(payload: AutoSaldoBody):
         'info': info, 'created_at': datetime.now(timezone.utc).isoformat(),
     })
     if not ok:
-        raise HTTPException(502, f'WhatsApp API gagal: {info.get("error")}')
+        err = info.get('error') or ''
+        hint = ''
+        if '131030' in err or 'allowed list' in err.lower():
+            hint = (' Nomor tujuan belum terdaftar di daftar penerima Meta (mode Test Number). '
+                    'Tambahkan nomor di Meta for Developers > WhatsApp > API Setup > "To" > Manage phone number list.')
+        # 424 (bukan 502) agar detail error tidak ditimpa halaman HTML oleh proxy/CDN
+        raise HTTPException(424, f'WhatsApp API gagal: {err}.{hint}')
     return {'ok': True, 'critical': n_crit, 'warning': n_warn, **info}
 
 
@@ -468,6 +475,50 @@ async def update_mapping(mapping_id: str, payload: MappingUpdate):
 
     await mapping_col.update_one({'id': mapping_id}, {'$set': updates})
     doc = await mapping_col.find_one({'id': mapping_id}, {'_id': 0})
+    # Persist ke seed_data.json agar perubahan bertahan saat seed ulang
+    await seed_store.persist_mapping(doc.get('lis_name'), doc.get('reagen_name'), doc.get('status'))
+    if sync:
+        doc['sync'] = sync
+    return doc
+
+
+class MappingCreate(BaseModel):
+    lis_name: str
+    reagen_name: Optional[str] = None
+
+
+@api.post('/mapping-tests', status_code=201)
+async def create_mapping(payload: MappingCreate):
+    """Tambah pemetaan baru: Nama Test (LIS) -> Nama Reagen Monitoring.
+
+    - lis_name wajib & unik (case-insensitive).
+    - reagen_name opsional; jika diisi -> status OK dan master reagen dibuat/ditautkan.
+    - Tersimpan di MongoDB dan seed_data.json (permanen).
+    """
+    lis_name = (payload.lis_name or '').strip()
+    if not lis_name:
+        raise HTTPException(400, 'Nama Test (LIS) wajib diisi')
+    dup = await mapping_col.find_one(
+        {'lis_name': re.compile(f'^{re.escape(lis_name)}$', re.I)}, {'_id': 0})
+    if dup:
+        raise HTTPException(409, f'Nama Test "{dup.get("lis_name")}" sudah ada di Pemetaan Test')
+
+    reagen_name = (payload.reagen_name or '').strip() or None
+    sync = None
+    if reagen_name:
+        sync = await _sync_master_reagen(None, reagen_name)
+        if sync and sync.get('nama_reagen'):
+            reagen_name = sync['nama_reagen']  # pakai ejaan yang ada di master
+    doc = {
+        'id': str(uuid.uuid4()),
+        'lis_name': lis_name,
+        'reagen_name': reagen_name,
+        'status': 'OK' if reagen_name else 'TIDAK ADA',
+        'created_at': datetime.now(timezone.utc).isoformat(),
+    }
+    await mapping_col.insert_one(doc)
+    doc.pop('_id', None)
+    await seed_store.persist_mapping(lis_name, reagen_name, doc['status'])
     if sync:
         doc['sync'] = sync
     return doc
@@ -496,6 +547,7 @@ async def _sync_master_reagen(old_name, new_name):
                                         {'$set': {'nama_reagen': new_name}})
             await mapping_col.update_many({'reagen_name': old_name},
                                           {'$set': {'reagen_name': new_name}})
+            await seed_store.persist_reagen_rename(old_name, new_name)
             return {'action': 'renamed', 'from': old_name, 'nama_reagen': new_name}
     new_doc = {
         'id': str(uuid.uuid4()),
@@ -510,6 +562,8 @@ async def _sync_master_reagen(old_name, new_name):
         'created_at': datetime.now(timezone.utc).isoformat(),
     }
     await reagen_col.insert_one(new_doc)
+    new_doc.pop('_id', None)
+    await seed_store.persist_new_reagen(new_doc)
     return {'action': 'created', 'nama_reagen': new_name}
 
 

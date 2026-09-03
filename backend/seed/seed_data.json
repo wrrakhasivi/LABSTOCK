@@ -1,7 +1,7 @@
 {
   "Juli2026": [
     {
-      "reagen": "Ca 15-3",
+      "reagen": "Vidas Ca 15-3",
       "qty_per_kit": 30,
       "avg_2022": 22,
       "avg_2023": 19,
@@ -13,7 +13,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Ca 19-9",
+      "reagen": "Vidas Ca 19-9",
       "qty_per_kit": 30,
       "avg_2022": 21,
       "avg_2023": 21,
@@ -25,7 +25,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Ca 125",
+      "reagen": "Vidas Ca 125",
       "qty_per_kit": 30,
       "avg_2022": 41,
       "avg_2023": 30,
@@ -37,7 +37,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Testosteron",
+      "reagen": "Vidas Testosteron",
       "qty_per_kit": 30,
       "avg_2022": 11,
       "avg_2023": 15,
@@ -49,7 +49,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "LH",
+      "reagen": "Vidas LH",
       "qty_per_kit": 60,
       "avg_2022": 6,
       "avg_2023": 10,
@@ -61,7 +61,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "FSH",
+      "reagen": "Vidas FSH",
       "qty_per_kit": 60,
       "avg_2022": 7,
       "avg_2023": 14,
@@ -73,7 +73,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "T3 Total",
+      "reagen": "Vidas T3 Total",
       "qty_per_kit": 60,
       "avg_2022": 21,
       "avg_2023": 17,
@@ -85,7 +85,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "T4 Total",
+      "reagen": "Vidas T4 Total",
       "qty_per_kit": 60,
       "avg_2022": 19,
       "avg_2023": 12,
@@ -97,7 +97,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "TSH",
+      "reagen": "Vidas TSH",
       "qty_per_kit": 60,
       "avg_2022": 14,
       "avg_2023": 29,
@@ -109,7 +109,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "FT4",
+      "reagen": "Vidas FT4",
       "qty_per_kit": 60,
       "avg_2022": 29,
       "avg_2023": 33,
@@ -121,7 +121,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Total PSA",
+      "reagen": "Vidas Total PSA",
       "qty_per_kit": 60,
       "avg_2022": 23,
       "avg_2023": 20,
@@ -145,7 +145,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Ferritin",
+      "reagen": "Vidas Ferritin",
       "qty_per_kit": 60,
       "avg_2022": 30,
       "avg_2023": 23,
@@ -157,7 +157,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "IgE Total",
+      "reagen": "Vidas IgE Total",
       "qty_per_kit": 60,
       "avg_2022": 30,
       "avg_2023": 40,
@@ -169,7 +169,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Estradiol",
+      "reagen": "Vidas Estradiol",
       "qty_per_kit": 60,
       "avg_2022": 6,
       "avg_2023": 12,
@@ -181,7 +181,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Progesteron",
+      "reagen": "Vidas Progesteron",
       "qty_per_kit": 60,
       "avg_2022": 3,
       "avg_2023": 6,
@@ -193,7 +193,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "AFP",
+      "reagen": "Vidas AFP",
       "qty_per_kit": 60,
       "avg_2022": 54,
       "avg_2023": 24,
@@ -205,7 +205,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "HBeAg",
+      "reagen": "Vidas HBeAg",
       "qty_per_kit": 30,
       "avg_2022": 7,
       "avg_2023": 12,
@@ -229,7 +229,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "FT3",
+      "reagen": "Vidas FT3",
       "qty_per_kit": 60,
       "avg_2022": 20,
       "avg_2023": 35,
@@ -241,7 +241,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Anti Toxo Avidity IgG",
+      "reagen": "Vidas Toxo Avidity IgG",
       "qty_per_kit": 30,
       "avg_2022": 2,
       "avg_2023": 1,
@@ -253,7 +253,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Anti-HBS",
+      "reagen": "Vidas Anti-HBS",
       "qty_per_kit": 60,
       "avg_2022": 60,
       "avg_2023": 12,
@@ -265,7 +265,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "HBsAg",
+      "reagen": "Vidas HBsAg",
       "qty_per_kit": 60,
       "avg_2022": 23,
       "avg_2023": 31,
@@ -277,7 +277,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Toxo IgG",
+      "reagen": "Vidas Toxo IgG",
       "qty_per_kit": 60,
       "avg_2022": 12,
       "avg_2023": 17,
@@ -289,7 +289,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Toxo IgM",
+      "reagen": "Vidas Toxo IgM",
       "qty_per_kit": 60,
       "avg_2022": 15,
       "avg_2023": 20,
@@ -301,7 +301,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Rubella IgG",
+      "reagen": "Vidas Rubella IgG",
       "qty_per_kit": 60,
       "avg_2022": 8,
       "avg_2023": 16,
@@ -313,7 +313,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Rubella IgM",
+      "reagen": "Vidas Rubella IgM",
       "qty_per_kit": 30,
       "avg_2022": 13,
       "avg_2023": 23,
@@ -325,7 +325,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "CMV IgG",
+      "reagen": "Vidas CMV IgG",
       "qty_per_kit": 60,
       "avg_2022": 16,
       "avg_2023": 25,
@@ -337,7 +337,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "CMV IgM",
+      "reagen": "Vidas CMV IgM",
       "qty_per_kit": 30,
       "avg_2022": 12,
       "avg_2023": 21,
@@ -349,7 +349,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Anti HAV IgM",
+      "reagen": "Vidas HAV IgM",
       "qty_per_kit": 30,
       "avg_2022": 12,
       "avg_2023": 14,
@@ -373,7 +373,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "TSHs",
+      "reagen": "Vidas TSHs",
       "qty_per_kit": 60,
       "avg_2022": 0,
       "avg_2023": 29,
@@ -409,7 +409,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Anti HAV Total",
+      "reagen": "Vidas HAV Total",
       "qty_per_kit": 30,
       "avg_2022": "-",
       "avg_2023": "-",
@@ -1167,7 +1167,7 @@
   ],
   "Aug2026": [
     {
-      "reagen": "Ca 15-3",
+      "reagen": "Vidas Ca 15-3",
       "qty_per_kit": 30,
       "avg_2022": 22,
       "avg_2023": 19,
@@ -1179,7 +1179,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Ca 19-9",
+      "reagen": "Vidas Ca 19-9",
       "qty_per_kit": 30,
       "avg_2022": 21,
       "avg_2023": 21,
@@ -1191,7 +1191,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Ca 125",
+      "reagen": "Vidas Ca 125",
       "qty_per_kit": 30,
       "avg_2022": 41,
       "avg_2023": 30,
@@ -1203,7 +1203,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Testosteron",
+      "reagen": "Vidas Testosteron",
       "qty_per_kit": 30,
       "avg_2022": 11,
       "avg_2023": 15,
@@ -1215,7 +1215,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "LH",
+      "reagen": "Vidas LH",
       "qty_per_kit": 60,
       "avg_2022": 6,
       "avg_2023": 10,
@@ -1227,7 +1227,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "FSH",
+      "reagen": "Vidas FSH",
       "qty_per_kit": 60,
       "avg_2022": 7,
       "avg_2023": 14,
@@ -1239,7 +1239,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "T3 Total",
+      "reagen": "Vidas T3 Total",
       "qty_per_kit": 60,
       "avg_2022": 21,
       "avg_2023": 17,
@@ -1251,7 +1251,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "T4 Total",
+      "reagen": "Vidas T4 Total",
       "qty_per_kit": 60,
       "avg_2022": 19,
       "avg_2023": 12,
@@ -1263,7 +1263,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "TSH",
+      "reagen": "Vidas TSH",
       "qty_per_kit": 60,
       "avg_2022": 14,
       "avg_2023": 29,
@@ -1275,7 +1275,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "FT4",
+      "reagen": "Vidas FT4",
       "qty_per_kit": 60,
       "avg_2022": 29,
       "avg_2023": 33,
@@ -1287,7 +1287,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Total PSA",
+      "reagen": "Vidas Total PSA",
       "qty_per_kit": 60,
       "avg_2022": 23,
       "avg_2023": 20,
@@ -1299,7 +1299,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Ferritin",
+      "reagen": "Vidas Ferritin",
       "qty_per_kit": 60,
       "avg_2022": 30,
       "avg_2023": 23,
@@ -1311,7 +1311,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "IgE Total",
+      "reagen": "Vidas IgE Total",
       "qty_per_kit": 60,
       "avg_2022": 30,
       "avg_2023": 40,
@@ -1323,7 +1323,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Estradiol",
+      "reagen": "Vidas Estradiol",
       "qty_per_kit": 60,
       "avg_2022": 6,
       "avg_2023": 12,
@@ -1335,7 +1335,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Progesteron",
+      "reagen": "Vidas Progesteron",
       "qty_per_kit": 60,
       "avg_2022": 3,
       "avg_2023": 6,
@@ -1347,7 +1347,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "AFP",
+      "reagen": "Vidas AFP",
       "qty_per_kit": 60,
       "avg_2022": 54,
       "avg_2023": 24,
@@ -1359,7 +1359,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "HBeAg",
+      "reagen": "Vidas HBeAg",
       "qty_per_kit": 30,
       "avg_2022": 7,
       "avg_2023": 12,
@@ -1383,7 +1383,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "FT3",
+      "reagen": "Vidas FT3",
       "qty_per_kit": 60,
       "avg_2022": 20,
       "avg_2023": 35,
@@ -1395,7 +1395,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Anti Toxo Avidity IgG",
+      "reagen": "Vidas Toxo Avidity IgG",
       "qty_per_kit": 30,
       "avg_2022": 2,
       "avg_2023": 1,
@@ -1407,7 +1407,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Anti-HBS",
+      "reagen": "Vidas Anti-HBS",
       "qty_per_kit": 60,
       "avg_2022": 60,
       "avg_2023": 12,
@@ -1419,7 +1419,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "HBsAg",
+      "reagen": "Vidas HBsAg",
       "qty_per_kit": 60,
       "avg_2022": 23,
       "avg_2023": 31,
@@ -1431,7 +1431,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Toxo IgG",
+      "reagen": "Vidas Toxo IgG",
       "qty_per_kit": 60,
       "avg_2022": 12,
       "avg_2023": 17,
@@ -1443,7 +1443,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Toxo IgM",
+      "reagen": "Vidas Toxo IgM",
       "qty_per_kit": 60,
       "avg_2022": 15,
       "avg_2023": 20,
@@ -1455,7 +1455,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Rubella IgG",
+      "reagen": "Vidas Rubella IgG",
       "qty_per_kit": 60,
       "avg_2022": 8,
       "avg_2023": 16,
@@ -1467,7 +1467,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Rubella IgM",
+      "reagen": "Vidas Rubella IgM",
       "qty_per_kit": 30,
       "avg_2022": 13,
       "avg_2023": 23,
@@ -1479,7 +1479,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "CMV IgG",
+      "reagen": "Vidas CMV IgG",
       "qty_per_kit": 60,
       "avg_2022": 16,
       "avg_2023": 25,
@@ -1491,7 +1491,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "CMV IgM",
+      "reagen": "Vidas CMV IgM",
       "qty_per_kit": 30,
       "avg_2022": 12,
       "avg_2023": 21,
@@ -1503,7 +1503,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Anti HAV IgM",
+      "reagen": "Vidas HAV IgM",
       "qty_per_kit": 30,
       "avg_2022": 12,
       "avg_2023": 14,
@@ -1527,7 +1527,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "TSHs",
+      "reagen": "Vidas TSHs",
       "qty_per_kit": 60,
       "avg_2022": 0,
       "avg_2023": 29,
@@ -1563,7 +1563,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Anti HAV Total",
+      "reagen": "Vidas HAV Total",
       "qty_per_kit": 30,
       "avg_2022": "-",
       "avg_2023": "-",
@@ -2610,7 +2610,7 @@
       }
     },
     {
-      "test": "Anti Toxo Avidity IgG",
+      "test": "Vidas Toxo Avidity IgG",
       "days": {
         "1": 1,
         "23": 1
@@ -2688,7 +2688,7 @@
       }
     },
     {
-      "test": "Anti HAV IgM",
+      "test": "Vidas HAV IgM",
       "days": {
         "1": 1,
         "6": 1,
@@ -2704,7 +2704,7 @@
       }
     },
     {
-      "test": "Toxo IgG",
+      "test": "Vidas Toxo IgG",
       "days": {
         "1": 1,
         "4": 2,
@@ -2739,7 +2739,7 @@
       }
     },
     {
-      "test": "IgE Total",
+      "test": "Vidas IgE Total",
       "days": {
         "1": 1,
         "2": 3,
@@ -2817,7 +2817,7 @@
       }
     },
     {
-      "test": "AFP",
+      "test": "Vidas AFP",
       "days": {
         "1": 2,
         "3": 3,
@@ -2847,7 +2847,7 @@
       }
     },
     {
-      "test": "Ca 125",
+      "test": "Vidas Ca 125",
       "days": {
         "1": 2,
         "3": 1,
@@ -2862,7 +2862,7 @@
       }
     },
     {
-      "test": "Ca 19-9",
+      "test": "Vidas Ca 19-9",
       "days": {
         "1": 2,
         "2": 2,
@@ -3524,7 +3524,7 @@
       }
     },
     {
-      "test": "FT4",
+      "test": "Vidas FT4",
       "days": {
         "1": 3,
         "2": 3,
@@ -3585,7 +3585,7 @@
       }
     },
     {
-      "test": "TSHs",
+      "test": "Vidas TSHs",
       "days": {
         "1": 5,
         "2": 2,
@@ -3616,7 +3616,7 @@
       }
     },
     {
-      "test": "TSH",
+      "test": "Vidas TSH",
       "days": {
         "1": 2,
         "2": 1,
@@ -3700,7 +3700,7 @@
       }
     },
     {
-      "test": "Anti-HBS",
+      "test": "Vidas Anti-HBS",
       "days": {
         "2": 1,
         "11": 1,
@@ -3727,7 +3727,7 @@
       }
     },
     {
-      "test": "Rubella IgG",
+      "test": "Vidas Rubella IgG",
       "days": {
         "2": 1,
         "3": 1,
@@ -3755,7 +3755,7 @@
       }
     },
     {
-      "test": "FSH",
+      "test": "Vidas FSH",
       "days": {
         "2": 2,
         "3": 1,
@@ -3780,7 +3780,7 @@
       }
     },
     {
-      "test": "Estradiol",
+      "test": "Vidas Estradiol",
       "days": {
         "2": 1,
         "3": 1,
@@ -3806,7 +3806,7 @@
       }
     },
     {
-      "test": "Testosteron",
+      "test": "Vidas Testosteron",
       "days": {
         "2": 4,
         "4": 1,
@@ -3847,7 +3847,7 @@
       }
     },
     {
-      "test": "HBsAg",
+      "test": "Vidas HBsAg",
       "days": {
         "3": 1,
         "4": 4,
@@ -3882,7 +3882,7 @@
       }
     },
     {
-      "test": "Toxo IgM",
+      "test": "Vidas Toxo IgM",
       "days": {
         "3": 1,
         "4": 1,
@@ -3903,7 +3903,7 @@
       }
     },
     {
-      "test": "Rubella IgM",
+      "test": "Vidas Rubella IgM",
       "days": {
         "3": 1,
         "6": 1,
@@ -3921,7 +3921,7 @@
       }
     },
     {
-      "test": "CMV IgM",
+      "test": "Vidas CMV IgM",
       "days": {
         "3": 1,
         "6": 1,
@@ -3958,7 +3958,7 @@
       }
     },
     {
-      "test": "Total PSA",
+      "test": "Vidas Total PSA",
       "days": {
         "3": 1,
         "6": 1,
@@ -3971,7 +3971,7 @@
       }
     },
     {
-      "test": "Ca 15-3",
+      "test": "Vidas Ca 15-3",
       "days": {
         "3": 1,
         "7": 1,
@@ -4002,7 +4002,7 @@
       }
     },
     {
-      "test": "FT3",
+      "test": "Vidas FT3",
       "days": {
         "3": 1,
         "6": 2,
@@ -4041,7 +4041,7 @@
       }
     },
     {
-      "test": "LH",
+      "test": "Vidas LH",
       "days": {
         "4": 1,
         "10": 1,
@@ -4059,7 +4059,7 @@
       }
     },
     {
-      "test": "T3 Total",
+      "test": "Vidas T3 Total",
       "days": {
         "3": 3,
         "4": 1,
@@ -4080,7 +4080,7 @@
       }
     },
     {
-      "test": "T4 Total",
+      "test": "Vidas T4 Total",
       "days": {
         "3": 3,
         "6": 10,
@@ -4099,7 +4099,7 @@
       }
     },
     {
-      "test": "Ferritin",
+      "test": "Vidas Ferritin",
       "days": {
         "6": 3,
         "8": 3,
@@ -4150,7 +4150,7 @@
       }
     },
     {
-      "test": "CMV IgG",
+      "test": "Vidas CMV IgG",
       "days": {
         "6": 1,
         "7": 1,
@@ -4210,7 +4210,7 @@
       }
     },
     {
-      "test": "Anti HAV Total",
+      "test": "Vidas HAV Total",
       "days": {
         "8": 1,
         "13": 1,
@@ -4220,7 +4220,7 @@
       }
     },
     {
-      "test": "HBeAg",
+      "test": "Vidas HBeAg",
       "days": {
         "8": 5,
         "10": 5,
@@ -4290,7 +4290,7 @@
       }
     },
     {
-      "test": "Progesteron",
+      "test": "Vidas Progesteron",
       "days": {
         "13": 2,
         "17": 1,
@@ -4396,7 +4396,7 @@
       }
     },
     {
-      "test": "Ferritin",
+      "test": "Vidas Ferritin",
       "days": {
         "1": 2,
         "3": 2,
@@ -4490,7 +4490,7 @@
       }
     },
     {
-      "test": "Rubella IgG",
+      "test": "Vidas Rubella IgG",
       "days": {
         "1": 4,
         "3": 5,
@@ -4594,7 +4594,7 @@
       }
     },
     {
-      "test": "HBsAg",
+      "test": "Vidas HBsAg",
       "days": {
         "3": 1,
         "10": 2,
@@ -4640,7 +4640,7 @@
       }
     },
     {
-      "test": "HBeAg",
+      "test": "Vidas HBeAg",
       "days": {
         "1": 2,
         "7": 1,
@@ -4649,7 +4649,7 @@
       }
     },
     {
-      "test": "Toxo IgG",
+      "test": "Vidas Toxo IgG",
       "days": {
         "1": 1,
         "5": 2,
@@ -4664,7 +4664,7 @@
       }
     },
     {
-      "test": "Toxo IgM",
+      "test": "Vidas Toxo IgM",
       "days": {
         "1": 1,
         "5": 1,
@@ -4682,7 +4682,7 @@
       }
     },
     {
-      "test": "Rubella IgM",
+      "test": "Vidas Rubella IgM",
       "days": {
         "1": 1,
         "5": 1,
@@ -4698,7 +4698,7 @@
       }
     },
     {
-      "test": "CMV IgG",
+      "test": "Vidas CMV IgG",
       "days": {
         "1": 1,
         "3": 1,
@@ -4710,7 +4710,7 @@
       }
     },
     {
-      "test": "CMV IgM",
+      "test": "Vidas CMV IgM",
       "days": {
         "1": 1,
         "8": 1,
@@ -4723,7 +4723,7 @@
       }
     },
     {
-      "test": "IgE Total",
+      "test": "Vidas IgE Total",
       "days": {
         "1": 4,
         "3": 2,
@@ -4798,7 +4798,7 @@
       }
     },
     {
-      "test": "Total PSA",
+      "test": "Vidas Total PSA",
       "days": {
         "1": 1,
         "7": 2,
@@ -4811,7 +4811,7 @@
       }
     },
     {
-      "test": "Ca 125",
+      "test": "Vidas Ca 125",
       "days": {
         "1": 1
       }
@@ -5353,7 +5353,7 @@
       }
     },
     {
-      "test": "FT4",
+      "test": "Vidas FT4",
       "days": {
         "1": 3,
         "3": 3,
@@ -5399,7 +5399,7 @@
       }
     },
     {
-      "test": "TSHs",
+      "test": "Vidas TSHs",
       "days": {
         "1": 1,
         "3": 3,
@@ -5422,7 +5422,7 @@
       }
     },
     {
-      "test": "FT3",
+      "test": "Vidas FT3",
       "days": {
         "1": 2,
         "5": 2,
@@ -5452,7 +5452,7 @@
       }
     },
     {
-      "test": "FSH",
+      "test": "Vidas FSH",
       "days": {
         "1": 2,
         "3": 2,
@@ -5472,7 +5472,7 @@
       }
     },
     {
-      "test": "LH",
+      "test": "Vidas LH",
       "days": {
         "1": 2,
         "3": 1,
@@ -5486,7 +5486,7 @@
       }
     },
     {
-      "test": "Estradiol",
+      "test": "Vidas Estradiol",
       "days": {
         "3": 1,
         "5": 2,
@@ -5502,7 +5502,7 @@
       }
     },
     {
-      "test": "Testosteron",
+      "test": "Vidas Testosteron",
       "days": {
         "1": 1,
         "3": 2,
@@ -5531,7 +5531,7 @@
       }
     },
     {
-      "test": "TSH",
+      "test": "Vidas TSH",
       "days": {
         "1": 2,
         "3": 2,
@@ -5593,13 +5593,13 @@
       }
     },
     {
-      "test": "Anti HAV Total",
+      "test": "Vidas HAV Total",
       "days": {
         "4": 1
       }
     },
     {
-      "test": "Anti HAV IgM",
+      "test": "Vidas HAV IgM",
       "days": {
         "4": 1,
         "6": 1,
@@ -5638,7 +5638,7 @@
       }
     },
     {
-      "test": "T3 Total",
+      "test": "Vidas T3 Total",
       "days": {
         "4": 1,
         "5": 7,
@@ -5656,7 +5656,7 @@
       }
     },
     {
-      "test": "T4 Total",
+      "test": "Vidas T4 Total",
       "days": {
         "4": 1,
         "5": 8,
@@ -5697,7 +5697,7 @@
       }
     },
     {
-      "test": "Progesteron",
+      "test": "Vidas Progesteron",
       "days": {
         "6": 1,
         "7": 1,
@@ -5748,7 +5748,7 @@
       }
     },
     {
-      "test": "Ca 19-9",
+      "test": "Vidas Ca 19-9",
       "days": {
         "8": 1,
         "10": 2,
@@ -5756,7 +5756,7 @@
       }
     },
     {
-      "test": "Ca 15-3",
+      "test": "Vidas Ca 15-3",
       "days": {
         "8": 1,
         "19": 1,
@@ -5781,7 +5781,7 @@
       }
     },
     {
-      "test": "Anti-HBS",
+      "test": "Vidas Anti-HBS",
       "days": {
         "10": 1,
         "11": 1,
@@ -5811,7 +5811,7 @@
       }
     },
     {
-      "test": "AFP",
+      "test": "Vidas AFP",
       "days": {
         "10": 1
       }
@@ -5847,13 +5847,13 @@
   "Mapping_Test": [
     {
       "lis_name": "UIBC",
-      "reagen": "UIBC",
-      "status": "OK"
+      "reagen": null,
+      "status": "TIDAK ADA"
     },
     {
       "lis_name": "Hematology Lengkap (Abs)",
-      "reagen": null,
-      "status": "TIDAK ADA"
+      "reagen": "Hematologi",
+      "status": "OK"
     },
     {
       "lis_name": "Paket Saturasi Transferin",
@@ -5927,7 +5927,7 @@
     },
     {
       "lis_name": "Ferritin",
-      "reagen": "Ferritin",
+      "reagen": "Vidas Ferritin",
       "status": "OK"
     },
     {
@@ -5957,13 +5957,13 @@
     },
     {
       "lis_name": "APTT",
-      "reagen": "Actin FS",
-      "status": "OK"
+      "reagen": null,
+      "status": "TIDAK ADA"
     },
     {
       "lis_name": "Fibrinogen",
-      "reagen": "Thrombin",
-      "status": "OK"
+      "reagen": null,
+      "status": "TIDAK ADA"
     },
     {
       "lis_name": "Waktu Trombin (TT)",
@@ -6047,7 +6047,7 @@
     },
     {
       "lis_name": "Anti Toxoplasma IgG Avidity",
-      "reagen": "Anti Toxo Avidity IgG",
+      "reagen": "Vidas Toxo Avidity IgG",
       "status": "OK"
     },
     {
@@ -6072,7 +6072,7 @@
     },
     {
       "lis_name": "Anti HAV Total",
-      "reagen": "Anti HAV Total",
+      "reagen": "Vidas HAV Total",
       "status": "OK"
     },
     {
@@ -6157,8 +6157,8 @@
     },
     {
       "lis_name": "ANA IF",
-      "reagen": "ANA IF",
-      "status": "OK"
+      "reagen": null,
+      "status": "TIDAK ADA"
     },
     {
       "lis_name": "ANCA",
@@ -6172,7 +6172,7 @@
     },
     {
       "lis_name": "HBsAg",
-      "reagen": "HBsAg",
+      "reagen": "Vidas HBsAg",
       "status": "OK"
     },
     {
@@ -6182,7 +6182,7 @@
     },
     {
       "lis_name": "Anti-HBs",
-      "reagen": "Anti-HBS",
+      "reagen": "Vidas Anti-HBS",
       "status": "OK"
     },
     {
@@ -6217,7 +6217,7 @@
     },
     {
       "lis_name": "HBeAg",
-      "reagen": "HBeAg",
+      "reagen": "Vidas HBeAg",
       "status": "OK"
     },
     {
@@ -6227,7 +6227,7 @@
     },
     {
       "lis_name": "Anti HAV IgM",
-      "reagen": "Anti HAV IgM",
+      "reagen": "Vidas HAV IgM",
       "status": "OK"
     },
     {
@@ -6237,22 +6237,22 @@
     },
     {
       "lis_name": "Anti Toxoplasma IgG",
-      "reagen": "Toxo IgG",
+      "reagen": "Vidas Toxo IgG",
       "status": "OK"
     },
     {
       "lis_name": "Anti Toxoplasma IgM",
-      "reagen": "Toxo IgM",
+      "reagen": "Vidas Toxo IgM",
       "status": "OK"
     },
     {
       "lis_name": "Anti Rubella IgG",
-      "reagen": "Rubella IgG",
+      "reagen": "Vidas Rubella IgG",
       "status": "OK"
     },
     {
       "lis_name": "Anti Rubella IgM",
-      "reagen": "Rubella IgM",
+      "reagen": "Vidas Rubella IgM",
       "status": "OK"
     },
     {
@@ -6262,12 +6262,12 @@
     },
     {
       "lis_name": "Anti CMV IgG",
-      "reagen": "CMV IgG",
+      "reagen": "Vidas CMV IgG",
       "status": "OK"
     },
     {
       "lis_name": "Anti CMV IgM",
-      "reagen": "CMV IgM",
+      "reagen": "Vidas CMV IgM",
       "status": "OK"
     },
     {
@@ -6302,7 +6302,7 @@
     },
     {
       "lis_name": "IgE Total",
-      "reagen": "IgE Total",
+      "reagen": "Vidas IgE Total",
       "status": "OK"
     },
     {
@@ -6342,12 +6342,12 @@
     },
     {
       "lis_name": "Alfa Feto Protein (AFP)",
-      "reagen": "AFP",
+      "reagen": "Vidas AFP",
       "status": "OK"
     },
     {
       "lis_name": "Total PSA",
-      "reagen": "Total PSA",
+      "reagen": "Vidas Total PSA",
       "status": "OK"
     },
     {
@@ -6357,17 +6357,17 @@
     },
     {
       "lis_name": "Ca 125",
-      "reagen": "Ca 125",
+      "reagen": "Vidas Ca 125",
       "status": "OK"
     },
     {
       "lis_name": "Ca 19-9",
-      "reagen": "Ca 19-9",
+      "reagen": "Vidas Ca 19-9",
       "status": "OK"
     },
     {
       "lis_name": "Ca 15-3",
-      "reagen": "Ca 15-3",
+      "reagen": "Vidas Ca 15-3",
       "status": "OK"
     },
     {
@@ -6862,7 +6862,7 @@
     },
     {
       "lis_name": "FT4",
-      "reagen": "FT4",
+      "reagen": "Vidas FT4",
       "status": "OK"
     },
     {
@@ -6872,12 +6872,12 @@
     },
     {
       "lis_name": "TSHs",
-      "reagen": "TSHs",
+      "reagen": "Vidas TSHs",
       "status": "OK"
     },
     {
       "lis_name": "FT3",
-      "reagen": "FT3",
+      "reagen": "Vidas FT3",
       "status": "OK"
     },
     {
@@ -6937,27 +6937,27 @@
     },
     {
       "lis_name": "FSH",
-      "reagen": "FSH",
+      "reagen": "Vidas FSH",
       "status": "OK"
     },
     {
       "lis_name": "LH",
-      "reagen": "LH",
+      "reagen": "Vidas LH",
       "status": "OK"
     },
     {
       "lis_name": "Estradiol",
-      "reagen": "Estradiol",
+      "reagen": "Vidas Estradiol",
       "status": "OK"
     },
     {
       "lis_name": "Progesteron",
-      "reagen": "Progesteron",
+      "reagen": "Vidas Progesteron",
       "status": "OK"
     },
     {
       "lis_name": "Testosteron",
-      "reagen": "Testosteron",
+      "reagen": "Vidas Testosteron",
       "status": "OK"
     },
     {
@@ -6972,17 +6972,17 @@
     },
     {
       "lis_name": "TSH",
-      "reagen": "TSH",
+      "reagen": "Vidas TSH",
       "status": "OK"
     },
     {
       "lis_name": "T3 Total",
-      "reagen": "T3 Total",
+      "reagen": "Vidas T3 Total",
       "status": "OK"
     },
     {
       "lis_name": "T4 Total",
-      "reagen": "T4 Total",
+      "reagen": "Vidas T4 Total",
       "status": "OK"
     },
     {
@@ -18554,126 +18554,126 @@
   "PRF": [
     {
       "period": "2026-07",
-      "reagen": "Ca 19-9",
+      "reagen": "Vidas Ca 19-9",
       "tanggal_pr": "2026-07-07 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "Ca 19-9",
+      "reagen": "Vidas Ca 19-9",
       "tanggal_pr": "2026-07-29 00:00:00",
       "reagent_no": 2,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "Testosteron",
+      "reagen": "Vidas Testosteron",
       "tanggal_pr": "2026-07-22 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "FSH",
+      "reagen": "Vidas FSH",
       "tanggal_pr": "2026-07-16 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "T4 Total",
+      "reagen": "Vidas T4 Total",
       "tanggal_pr": "2026-07-22 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "TSH",
+      "reagen": "Vidas TSH",
       "tanggal_pr": "2026-07-29 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "FT4",
+      "reagen": "Vidas FT4",
       "tanggal_pr": "2026-07-07 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "FT4",
+      "reagen": "Vidas FT4",
       "tanggal_pr": "2026-07-16 00:00:00",
       "reagent_no": 2,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "Ferritin",
+      "reagen": "Vidas Ferritin",
       "tanggal_pr": "2026-07-07 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "HBeAg",
+      "reagen": "Vidas HBeAg",
       "tanggal_pr": "2026-07-10 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "FT3",
+      "reagen": "Vidas FT3",
       "tanggal_pr": "2026-07-16 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "HBsAg",
+      "reagen": "Vidas HBsAg",
       "tanggal_pr": "2026-07-07 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "Toxo IgM",
+      "reagen": "Vidas Toxo IgM",
       "tanggal_pr": "2026-07-07 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "Rubella IgG",
+      "reagen": "Vidas Rubella IgG",
       "tanggal_pr": "2026-07-13 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "Rubella IgM",
+      "reagen": "Vidas Rubella IgM",
       "tanggal_pr": "2026-07-13 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "CMV IgM",
+      "reagen": "Vidas CMV IgM",
       "tanggal_pr": "2026-07-07 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "TSHs",
+      "reagen": "Vidas TSHs",
       "tanggal_pr": "2026-07-07 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-07",
-      "reagen": "TSHs",
+      "reagen": "Vidas TSHs",
       "tanggal_pr": "2026-07-16 00:00:00",
       "reagent_no": 2,
       "kits": 1
@@ -18771,105 +18771,105 @@
     },
     {
       "period": "2026-08",
-      "reagen": "Ca 15-3",
+      "reagen": "Vidas Ca 15-3",
       "tanggal_pr": "2026-08-04 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "Ca 125",
+      "reagen": "Vidas Ca 125",
       "tanggal_pr": "2026-08-04 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "LH",
+      "reagen": "Vidas LH",
       "tanggal_pr": "2026-08-04 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "T3 Total",
+      "reagen": "Vidas T3 Total",
       "tanggal_pr": "2026-08-04 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "Ferritin",
+      "reagen": "Vidas Ferritin",
       "tanggal_pr": "2026-08-19 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "IgE Total",
+      "reagen": "Vidas IgE Total",
       "tanggal_pr": "2026-08-19 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "Estradiol",
+      "reagen": "Vidas Estradiol",
       "tanggal_pr": "2026-08-19 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "HBeAg",
+      "reagen": "Vidas HBeAg",
       "tanggal_pr": "2026-08-04 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "Toxo IgG",
+      "reagen": "Vidas Toxo IgG",
       "tanggal_pr": "2026-08-19 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "Rubella IgG",
+      "reagen": "Vidas Rubella IgG",
       "tanggal_pr": "2026-08-19 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "Rubella IgM",
+      "reagen": "Vidas Rubella IgM",
       "tanggal_pr": "2026-08-19 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "CMV IgG",
+      "reagen": "Vidas CMV IgG",
       "tanggal_pr": "2026-08-19 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "CMV IgM",
+      "reagen": "Vidas CMV IgM",
       "tanggal_pr": "2026-08-19 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "Anti HAV IgM",
+      "reagen": "Vidas HAV IgM",
       "tanggal_pr": "2026-08-19 00:00:00",
       "reagent_no": 1,
       "kits": 1
     },
     {
       "period": "2026-08",
-      "reagen": "TSHs",
+      "reagen": "Vidas TSHs",
       "tanggal_pr": "2026-08-19 00:00:00",
       "reagent_no": 1,
       "kits": 1
@@ -19004,7 +19004,7 @@
   "Penerimaan": [
     {
       "period": "2026-07",
-      "reagen": "Ca 19-9",
+      "reagen": "Vidas Ca 19-9",
       "tanggal_terima": "2026-07-10 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19012,7 +19012,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "Ca 19-9",
+      "reagen": "Vidas Ca 19-9",
       "tanggal_terima": "2026-07-31 00:00:00",
       "reagent_no": 2,
       "kits": 1,
@@ -19020,7 +19020,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "Testosteron",
+      "reagen": "Vidas Testosteron",
       "tanggal_terima": "2026-07-28 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19028,7 +19028,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "FSH",
+      "reagen": "Vidas FSH",
       "tanggal_terima": "2026-07-28 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19036,7 +19036,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "T4 Total",
+      "reagen": "Vidas T4 Total",
       "tanggal_terima": "2026-07-28 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19044,7 +19044,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "TSH",
+      "reagen": "Vidas TSH",
       "tanggal_terima": "2026-07-31 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19052,7 +19052,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "FT4",
+      "reagen": "Vidas FT4",
       "tanggal_terima": "2026-07-10 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19060,7 +19060,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "FT4",
+      "reagen": "Vidas FT4",
       "tanggal_terima": "2026-07-28 00:00:00",
       "reagent_no": 2,
       "kits": 1,
@@ -19068,7 +19068,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "Ferritin",
+      "reagen": "Vidas Ferritin",
       "tanggal_terima": "2026-07-10 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19076,7 +19076,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "HBeAg",
+      "reagen": "Vidas HBeAg",
       "tanggal_terima": "2026-07-17 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19084,7 +19084,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "FT3",
+      "reagen": "Vidas FT3",
       "tanggal_terima": "2026-07-31 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19092,7 +19092,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "HBsAg",
+      "reagen": "Vidas HBsAg",
       "tanggal_terima": "2026-07-10 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19100,7 +19100,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "Toxo IgM",
+      "reagen": "Vidas Toxo IgM",
       "tanggal_terima": "2026-07-10 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19108,7 +19108,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "Rubella IgG",
+      "reagen": "Vidas Rubella IgG",
       "tanggal_terima": "2026-07-17 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19116,7 +19116,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "Rubella IgM",
+      "reagen": "Vidas Rubella IgM",
       "tanggal_terima": "2026-07-17 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19124,7 +19124,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "CMV IgM",
+      "reagen": "Vidas CMV IgM",
       "tanggal_terima": "2026-07-10 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19132,7 +19132,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "TSHs",
+      "reagen": "Vidas TSHs",
       "tanggal_terima": "2026-07-10 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19140,7 +19140,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "TSHs",
+      "reagen": "Vidas TSHs",
       "tanggal_terima": "2026-07-28 00:00:00",
       "reagent_no": 2,
       "kits": 1,
@@ -19244,7 +19244,7 @@
     },
     {
       "period": "2026-08",
-      "reagen": "Ca 15-3",
+      "reagen": "Vidas Ca 15-3",
       "tanggal_terima": "2026-08-11 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19252,7 +19252,7 @@
     },
     {
       "period": "2026-08",
-      "reagen": "Ca 125",
+      "reagen": "Vidas Ca 125",
       "tanggal_terima": "2026-08-11 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19260,7 +19260,7 @@
     },
     {
       "period": "2026-08",
-      "reagen": "LH",
+      "reagen": "Vidas LH",
       "tanggal_terima": "2026-08-11 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19268,7 +19268,7 @@
     },
     {
       "period": "2026-08",
-      "reagen": "T3 Total",
+      "reagen": "Vidas T3 Total",
       "tanggal_terima": "2026-08-11 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19276,7 +19276,7 @@
     },
     {
       "period": "2026-08",
-      "reagen": "HBeAg",
+      "reagen": "Vidas HBeAg",
       "tanggal_terima": "2026-08-11 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19409,6 +19409,116 @@
       "reagent_no": 1,
       "kits": 1,
       "qty_per_kit": 10
+    }
+  ],
+  "Master_Extra": [
+    {
+      "nama_reagen": "UIBC",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "Hematologi",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "Innovin",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "Actin FS",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "ANA IF",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "RPR",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "TPHA",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "Thrombin",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "INDIKO APO B",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "Elecsys Procalcitonin",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "INDIKO APO A",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "Saturasi Transferin",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs"
     }
   ]
 }

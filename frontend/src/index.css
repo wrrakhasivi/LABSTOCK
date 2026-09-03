@@ -84,6 +84,16 @@ body {
     font-variant-numeric: tabular-nums;
     font-size: 0.75rem;
 }
+/* Sorot kolom tanggal hari ini: latar biru tipis, header lebih tegas */
+.ls-day-col.ls-today {
+    background-color: hsl(205 90% 55% / 0.12);
+    box-shadow: inset 1px 0 0 hsl(205 90% 55% / 0.35), inset -1px 0 0 hsl(205 90% 55% / 0.35);
+}
+.ls-scroll thead th.ls-day-col.ls-today {
+    background-color: hsl(205 90% 55% / 0.18);
+    color: hsl(205 80% 32%);
+    font-weight: 700;
+}
 /* Kolom ringkasan (QC, Total Pakai, Stok Masuk, Sisa Stok, Buffer, Satuan, Status): rapat */
 .ls-sum-col {
     padding-left: 6px;
