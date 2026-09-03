@@ -278,13 +278,13 @@ export default function PemantauanStok() {
                     {dayCols.map((d) => (
                       <th key={d} className="ls-day-col border-b py-2">{d}</th>
                     ))}
-                    <th className="border-b border-l px-2 py-2 text-right whitespace-nowrap" title="Input manual QC (klik untuk edit)">QC ✎</th>
-                    <th className="border-b px-2 py-2 text-right">Total Pakai</th>
-                    <th className="border-b px-2 py-2 text-right">Stok Masuk</th>
-                    <th className="border-b px-2 py-2 text-right whitespace-nowrap" title="Otomatis: (Saldo Awal - Total Pemakaian) + Stok Masuk">Sisa Stok</th>
-                    <th className="border-b px-2 py-2 text-right">Buffer</th>
-                    <th className="border-b px-2 py-2 text-left">Satuan</th>
-                    <th className="border-b px-2 py-2 text-center min-w-[110px]">Status</th>
+                    <th className="ls-sum-col border-b border-l py-2 text-right" title="Input manual QC (klik untuk edit)">QC ✎</th>
+                    <th className="ls-sum-col border-b py-2 text-right">Total<br />Pakai</th>
+                    <th className="ls-sum-col border-b py-2 text-right">Stok<br />Masuk</th>
+                    <th className="ls-sum-col border-b py-2 text-right" title="Otomatis: (Saldo Awal - Total Pemakaian) + Stok Masuk">Sisa<br />Stok</th>
+                    <th className="ls-sum-col border-b py-2 text-right">Buffer</th>
+                    <th className="ls-sum-col border-b py-2 text-left">Satuan</th>
+                    <th className="ls-sum-col border-b py-2 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -307,21 +307,21 @@ export default function PemantauanStok() {
                         value={r.qc}
                         onSave={(v) => saveQc(r, v)}
                         testid={`qc-${r.reagen_id}`}
-                        alignCls="text-right border-l"
+                        alignCls="ls-sum-col text-right border-l"
                         title="Klik untuk input manual QC"
                       />
-                      <td className="num border-b px-2 py-1.5 text-right font-semibold">{fmtNum(r.total_pemakaian)}</td>
-                      <td className="num border-b px-2 py-1.5 text-right">{fmtNum(r.stok_masuk)}</td>
+                      <td className="num ls-sum-col border-b py-1.5 text-right font-semibold">{fmtNum(r.total_pemakaian)}</td>
+                      <td className="num ls-sum-col border-b py-1.5 text-right">{fmtNum(r.stok_masuk)}</td>
                       <td
-                        className={`num border-b px-2 py-1.5 text-right font-semibold ${r.status === 'critical' ? 'text-red-700' : ''}`}
+                        className={`num ls-sum-col border-b py-1.5 text-right font-semibold ${r.status === 'critical' ? 'text-red-700' : ''}`}
                         data-testid={`sisa-stok-${r.reagen_id}`}
                         title="Otomatis: (Saldo Awal - Total Pemakaian) + Stok Masuk"
                       >
                         {fmtNum(r.sisa_stock)}
                       </td>
-                      <td className="num border-b px-2 py-1.5 text-right text-muted-foreground">{fmtNum(r.buffer_stock)}</td>
-                      <td className="border-b px-2 py-1.5 text-left text-xs text-muted-foreground">{r.satuan}</td>
-                      <td className="border-b px-2 py-1.5 text-center"><StatusBadge status={r.status} /></td>
+                      <td className="num ls-sum-col border-b py-1.5 text-right text-muted-foreground">{fmtNum(r.buffer_stock)}</td>
+                      <td className="ls-sum-col border-b py-1.5 text-left text-xs text-muted-foreground">{r.satuan}</td>
+                      <td className="ls-sum-col border-b py-1.5 text-center"><StatusBadge status={r.status} /></td>
                     </tr>
                   ))}
                 </tbody>

@@ -207,3 +207,15 @@ agent_communication:
     -message: "NEW FEATURES TESTING COMPLETE (Test Sequence 4). Both tasks verified and working correctly. TASK 1 - Daily LIS Computation: Dynamic computation from lis_raw via mapping_test is working perfectly✓. Independently verified all daily values match between API and direct MongoDB computation. Tested with July 2026 data (999 lis_raw docs). Examples: Hematologi total=179✓, Hbsag rapid total=24✓. All hari values (1-31) correctly aggregated through mapping_test (status=OK). NOTE: Test requirement specified Aug 2026 data with Hematologi total=43, but database only has July 2026 lis_raw data - this is a data availability issue, not implementation issue. TASK 2 - QC Manual Endpoint: Working perfectly✓. All 100 rows have is_override=false (automatic Sisa Stok)✓. Tested PUT /api/monitoring/qc with Ferritin: QC updated 3→5✓, total_pemakaian=sum(hari)+qc (0+5=5)✓, sisa_stock=saldo_awal-total+stok_masuk (46-5+0=41)✓. Arithmetic verified correct. Original QC restored after testing. Both features ready for production."
     -agent: "testing"
     -message: "LIS IMPORT BUG FIX TESTING COMPLETE (Test Sequence 6). All three test scenarios PASSED✓. BUG FIX VERIFIED: Per-row Tanggal column now correctly spreads usage to each row's actual date instead of placing everything on day 31 (the filename date). Test details: Created Excel LIS_260831.xlsx with per-row Tanggal column (UIBC on days 2,9 and Hematology Lengkap on days 20,27). Import successful. Monitoring confirmed values on correct days: UIBC={'2':4,'9':6}✓, Hematologi={'20':5,'27':7}✓. NOT all on day 31. Bug is FIXED. REGRESSION TESTS PASSED: (1) Matrix day-columns format still works correctly (LIS_260830.xlsx: UIBC days 5,12)✓. (2) Single date from filename format still works correctly (LIS_260803.xlsx: UIBC day 3)✓. CLEANUP COMPLETE: All 3 test source files deleted (107 pemakaian records removed). Database returned to prior state. Ready for production."
+frontend:
+  - task: "Pemantauan Stok: perapatan kolom 1-31 & kolom ringkasan"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PemantauanStok.js, frontend/src/index.css"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "main"
+        -comment: "Kolom hari 1-31: 34px -> 26px (padding 1px, font 0.75rem). Kolom QC/Total Pakai/Stok Masuk/Sisa Stok/Buffer/Satuan/Status pakai class .ls-sum-col (padding 6px, nowrap), header 2 baris, min-w Status dihapus. Lebar tabel 1860px -> 1610px, muat tanpa scroll horizontal di 1920px. Verified via screenshot. Note: backend/.env & frontend/.env hilang di environment, dipulihkan (MONGO_URL, DB_NAME=labstock, REACT_APP_BACKEND_URL)."

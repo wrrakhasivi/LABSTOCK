@@ -74,15 +74,21 @@ body {
 }
 /* Kolom harian 1-31: lebar seragam & presisi, angka rata tengah + tabular */
 .ls-day-col {
-    width: 34px;
-    min-width: 34px;
-    max-width: 34px;
-    padding-left: 2px;
-    padding-right: 2px;
+    width: 26px;
+    min-width: 26px;
+    max-width: 26px;
+    padding-left: 1px;
+    padding-right: 1px;
     text-align: center;
     font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-variant-numeric: tabular-nums;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
+}
+/* Kolom ringkasan (QC, Total Pakai, Stok Masuk, Sisa Stok, Buffer, Satuan, Status): rapat */
+.ls-sum-col {
+    padding-left: 6px;
+    padding-right: 6px;
+    white-space: nowrap;
 }
 .ls-scroll thead th {
     position: sticky;
