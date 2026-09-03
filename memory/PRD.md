@@ -77,6 +77,15 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   (role Petugas/Koordinator bebas dipilih), hapus akun (tidak bisa hapus diri sendiri / satu-satunya Koordinator).
   Tested: testing_agent iteration_5 – backend 22/22 pytest, frontend 100% PASS.
 
+- **(2026-09-03) Security Audit + Fixes**: `security_audit_agent` menemukan 1 CRITICAL + 3 MEDIUM, user approved
+  fix semua 4: (1) `auth.seed_accounts()` tidak lagi menimpa password akun yang sudah ada saat restart (bug ini
+  bisa merusak fitur Ganti Password untuk kalgen/raihan); (2) token JWT kini membawa klaim `tv` (token_version)
+  yang divalidasi ulang ke DB di `get_current_user` — password diubah/akun dihapus langsung 401 tanpa menunggu
+  token expired 12 jam; `change_password` melakukan `$inc token_version` (invalidasi semua sesi lama akun itu),
+  frontend auto-logout setelah ganti password sendiri; (3) `GET /api/reagen?query=` kini `re.escape()` mencegah
+  ReDoS; (4) `POST /api/lis/import` dibatasi `MAX_LIS_FILES=50` & `MAX_LIS_FILE_SIZE=10MB`/file. Tested:
+  testing_agent iteration_6 – backend 11/11 pytest (`tests/test_security_fixes.py`), frontend 100% PASS.
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.

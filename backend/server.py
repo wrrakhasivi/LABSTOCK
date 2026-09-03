@@ -36,6 +36,9 @@ api = APIRouter(prefix='/api')
 MONTH_NAMES_ID = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
                   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 
+MAX_LIS_FILES = 50
+MAX_LIS_FILE_SIZE = 10 * 1024 * 1024  # 10MB per file
+
 
 # ---------- Models ----------
 class ReagenUpdate(BaseModel):
@@ -99,7 +102,7 @@ async def login(payload: LoginBody):
     user = await users_col.find_one({'username': payload.username}, {'_id': 0})
     if not user or not auth.verify_password(payload.password, user.get('password_hash', '')):
         raise HTTPException(401, 'Username atau password salah')
-    token = auth.create_token(user['username'], user['role'])
+    token = auth.create_token(user['username'], user['role'], user.get('token_version', 0))
     return {'access_token': token, 'username': user['username'], 'role': user['role']}
 
 
@@ -115,14 +118,19 @@ class ChangePasswordBody(BaseModel):
 
 @api.post('/auth/change-password')
 async def change_password(payload: ChangePasswordBody, user: dict = Depends(auth.get_current_user)):
-    """Ganti password akun sendiri (Petugas maupun Koordinator) — wajib verifikasi password lama."""
+    """Ganti password akun sendiri (Petugas maupun Koordinator) — wajib verifikasi password lama.
+
+    Menaikkan token_version agar sesi lama (di perangkat lain) langsung tidak berlaku.
+    """
     doc = await users_col.find_one({'username': user['username']})
     if not doc or not auth.verify_password(payload.current_password, doc.get('password_hash', '')):
         raise HTTPException(400, 'Password lama tidak sesuai')
     if len(payload.new_password) < 4:
         raise HTTPException(400, 'Password baru minimal 4 karakter')
-    await users_col.update_one({'username': user['username']},
-                               {'$set': {'password_hash': auth.hash_password(payload.new_password)}})
+    await users_col.update_one(
+        {'username': user['username']},
+        {'$set': {'password_hash': auth.hash_password(payload.new_password)},
+         '$inc': {'token_version': 1}})
     return {'ok': True}
 
 
@@ -156,6 +164,7 @@ async def create_user(payload: UserCreate, user: dict = Depends(auth.require_koo
         'username': username,
         'password_hash': auth.hash_password(payload.password),
         'role': payload.role,
+        'token_version': 0,
         'created_at': datetime.now(timezone.utc).isoformat(),
     }
     await users_col.insert_one(doc)
@@ -204,7 +213,7 @@ async def reseed(user: dict = Depends(auth.require_koordinator)):
 async def list_reagen(query: Optional[str] = None, user: dict = Depends(auth.get_current_user)):
     filt = {}
     if query:
-        filt['nama_reagen'] = {'$regex': query, '$options': 'i'}
+        filt['nama_reagen'] = {'$regex': re.escape(query[:200]), '$options': 'i'}
     docs = await reagen_col.find(filt, {'_id': 0}).sort('nama_reagen', 1).to_list(2000)
     mapped = await _mapped_reagen_ids()
     docs = [d for d in docs if d['id'] in mapped]
@@ -747,12 +756,16 @@ async def lis_import(files: list[UploadFile] = File(...), user: dict = Depends(a
     """
     if not files:
         raise HTTPException(400, 'Tidak ada file diunggah')
+    if len(files) > MAX_LIS_FILES:
+        raise HTTPException(400, f'Maksimal {MAX_LIS_FILES} file sekali import')
     payload = []
     for f in files:
         name = f.filename or 'file.xlsx'
         if not name.lower().endswith(('.xlsx', '.xlsm', '.xls')):
             raise HTTPException(400, f'{name}: hanya file Excel (.xlsx / .xls) yang didukung')
         content = await f.read()
+        if len(content) > MAX_LIS_FILE_SIZE:
+            raise HTTPException(400, f'{name}: ukuran file melebihi {MAX_LIS_FILE_SIZE // (1024 * 1024)}MB')
         payload.append((name, content))
     summary = await lis_import_files(
         payload, reagen_col, mapping_col, pemakaian_col, lis_raw_col, import_log_col)

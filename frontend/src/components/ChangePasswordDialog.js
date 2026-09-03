@@ -6,8 +6,10 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from './ui/dialog';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
 
 export const ChangePasswordButton = () => {
+  const { logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ current_password: '', new_password: '', confirm: '' });
   const [busy, setBusy] = useState(false);
@@ -21,9 +23,10 @@ export const ChangePasswordButton = () => {
     setBusy(true);
     try {
       await api.changePassword({ current_password: form.current_password, new_password: form.new_password });
-      toast.success('Password berhasil diubah');
+      toast.success('Password berhasil diubah. Silakan login kembali dengan password baru.');
       setOpen(false);
       reset();
+      logout();
     } catch (e) {
       toast.error(e?.response?.data?.detail || 'Gagal mengubah password');
     } finally {
