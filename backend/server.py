@@ -108,6 +108,78 @@ async def me(user: dict = Depends(auth.get_current_user)):
     return user
 
 
+class ChangePasswordBody(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@api.post('/auth/change-password')
+async def change_password(payload: ChangePasswordBody, user: dict = Depends(auth.get_current_user)):
+    """Ganti password akun sendiri (Petugas maupun Koordinator) — wajib verifikasi password lama."""
+    doc = await users_col.find_one({'username': user['username']})
+    if not doc or not auth.verify_password(payload.current_password, doc.get('password_hash', '')):
+        raise HTTPException(400, 'Password lama tidak sesuai')
+    if len(payload.new_password) < 4:
+        raise HTTPException(400, 'Password baru minimal 4 karakter')
+    await users_col.update_one({'username': user['username']},
+                               {'$set': {'password_hash': auth.hash_password(payload.new_password)}})
+    return {'ok': True}
+
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    role: str
+
+
+@api.get('/users')
+async def list_users(user: dict = Depends(auth.require_koordinator)):
+    """Daftar akun (Petugas & Koordinator) — hanya Koordinator."""
+    docs = await users_col.find({}, {'_id': 0, 'password_hash': 0}).sort('username', 1).to_list(500)
+    return docs
+
+
+@api.post('/users', status_code=201)
+async def create_user(payload: UserCreate, user: dict = Depends(auth.require_koordinator)):
+    """Koordinator membuat akun baru (Petugas atau Koordinator lain)."""
+    username = (payload.username or '').strip().lower()
+    if not username:
+        raise HTTPException(400, 'Username wajib diisi')
+    if payload.role not in ('petugas', 'koordinator'):
+        raise HTTPException(400, 'Role tidak valid (petugas / koordinator)')
+    if len(payload.password) < 4:
+        raise HTTPException(400, 'Password minimal 4 karakter')
+    existing = await users_col.find_one({'username': username})
+    if existing:
+        raise HTTPException(409, f'Username "{username}" sudah dipakai')
+    doc = {
+        'username': username,
+        'password_hash': auth.hash_password(payload.password),
+        'role': payload.role,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+    }
+    await users_col.insert_one(doc)
+    doc.pop('_id', None)
+    doc.pop('password_hash', None)
+    return doc
+
+
+@api.delete('/users/{username}')
+async def delete_user(username: str, user: dict = Depends(auth.require_koordinator)):
+    """Koordinator menghapus akun. Tidak dapat menghapus akun sendiri atau satu-satunya Koordinator."""
+    if username == user['username']:
+        raise HTTPException(400, 'Tidak dapat menghapus akun sendiri')
+    existing = await users_col.find_one({'username': username})
+    if not existing:
+        raise HTTPException(404, 'Akun tidak ditemukan')
+    if existing.get('role') == 'koordinator':
+        remaining = await users_col.count_documents({'role': 'koordinator'})
+        if remaining <= 1:
+            raise HTTPException(400, 'Tidak dapat menghapus satu-satunya akun Koordinator')
+    await users_col.delete_one({'username': username})
+    return {'ok': True}
+
+
 @api.get('/meta/excel-summary')
 async def excel_summary(user: dict = Depends(auth.get_current_user)):
     return EXCEL_SUMMARY

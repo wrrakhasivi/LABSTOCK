@@ -70,6 +70,13 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   ada data stock_period untuk tahun itu. Tested: testing_agent iteration_4 – frontend 100% PASS (verifikasi ulang
   setelah logout/login, ganti bulan, KPI dashboard).
 
+- **(2026-09-03) Ganti Password & Kelola Pengguna**: `POST /api/auth/change-password` (self-service, wajib
+  password lama, semua role) di `ChangePasswordDialog.js` (ikon kunci di topbar). Halaman baru `/pengguna`
+  (`Pengguna.js`, khusus Koordinator, nav disembunyikan utk Petugas + akses ditolak bila diakses langsung):
+  `GET/POST /api/users`, `DELETE /api/users/{username}` — Koordinator bisa lihat daftar akun, buat akun baru
+  (role Petugas/Koordinator bebas dipilih), hapus akun (tidak bisa hapus diri sendiri / satu-satunya Koordinator).
+  Tested: testing_agent iteration_5 – backend 22/22 pytest, frontend 100% PASS.
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.

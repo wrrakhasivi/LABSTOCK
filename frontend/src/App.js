@@ -13,6 +13,7 @@ import DataLIS from './pages/DataLIS';
 import PRF from './pages/PRF';
 import Penerimaan from './pages/Penerimaan';
 import AnalisisExcel from './pages/AnalisisExcel';
+import Pengguna from './pages/Pengguna';
 
 function AuthedApp() {
   return (
@@ -26,6 +27,7 @@ function AuthedApp() {
           <Route path="/prf" element={<PRF />} />
           <Route path="/penerimaan" element={<Penerimaan />} />
           <Route path="/analisis-excel" element={<AnalisisExcel />} />
+          <Route path="/pengguna" element={<Pengguna />} />
         </Routes>
       </AppShell>
     </PeriodProvider>

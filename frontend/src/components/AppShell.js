@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Table2, FlaskConical, Database, FileText, PackageCheck,
-  BookOpen, Menu, X, RefreshCw, Activity, LogOut, ShieldCheck, Eye,
+  BookOpen, Menu, X, RefreshCw, Activity, LogOut, ShieldCheck, Eye, Users,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
 import { usePeriod } from '../lib/period';
 import { useAuth } from '../lib/auth';
+import { ChangePasswordButton } from './ChangePasswordDialog';
 import { MONTHS_ID } from '../lib/api';
 
 const NAV = [
@@ -19,6 +20,7 @@ const NAV = [
   { to: '/prf', label: 'PRF', icon: FileText, slug: 'prf' },
   { to: '/penerimaan', label: 'Penerimaan', icon: PackageCheck, slug: 'penerimaan' },
   { to: '/analisis-excel', label: 'Analisis Struktur Excel', icon: BookOpen, slug: 'analisis-excel' },
+  { to: '/pengguna', label: 'Kelola Pengguna', icon: Users, slug: 'pengguna', koordinatorOnly: true },
 ];
 
 const PAGE_TITLES = {
@@ -29,53 +31,58 @@ const PAGE_TITLES = {
   '/prf': 'PRF (Purchase Request)',
   '/penerimaan': 'Penerimaan Barang',
   '/analisis-excel': 'Analisis Struktur Excel',
+  '/pengguna': 'Kelola Pengguna',
 };
 
-const SidebarContent = ({ onNavigate }) => (
-  <div className="flex h-full flex-col">
-    <div className="flex items-center gap-2 px-4 h-14 border-b">
-      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-        <FlaskConical className="h-5 w-5" />
+const SidebarContent = ({ onNavigate }) => {
+  const { isKoordinator } = useAuth();
+  const navItems = NAV.filter((item) => !item.koordinatorOnly || isKoordinator);
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 px-4 h-14 border-b">
+        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <FlaskConical className="h-5 w-5" />
+        </div>
+        <div className="leading-tight">
+          <div className="text-sm font-bold tracking-tight">LabStock</div>
+          <div className="text-[10px] text-muted-foreground">Stok Reagen Lab PK</div>
+        </div>
       </div>
-      <div className="leading-tight">
-        <div className="text-sm font-bold tracking-tight">LabStock</div>
-        <div className="text-[10px] text-muted-foreground">Stok Reagen Lab PK</div>
+      <nav className="flex-1 space-y-1 p-2 overflow-y-auto" data-testid="app-sidebar">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              onClick={onNavigate}
+              data-testid={`sidebar-nav-item-${item.slug}`}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                  isActive
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              <span>{item.label}</span>
+            </NavLink>
+          );
+        })}
+      </nav>
+      <div className="border-t p-3 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-1"><Activity className="h-3 w-3" /> Sumber: Excel PEMANTAUAN STOCK REAGEN LAB PK</div>
       </div>
     </div>
-    <nav className="flex-1 space-y-1 p-2 overflow-y-auto" data-testid="app-sidebar">
-      {NAV.map((item) => {
-        const Icon = item.icon;
-        return (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            onClick={onNavigate}
-            data-testid={`sidebar-nav-item-${item.slug}`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                isActive
-                  ? 'bg-accent text-accent-foreground font-medium'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-          >
-            <Icon className="h-4 w-4 shrink-0" />
-            <span>{item.label}</span>
-          </NavLink>
-        );
-      })}
-    </nav>
-    <div className="border-t p-3 text-[10px] text-muted-foreground">
-      <div className="flex items-center gap-1"><Activity className="h-3 w-3" /> Sumber: Excel PEMANTAUAN STOCK REAGEN LAB PK</div>
-    </div>
-  </div>
-);
+  );
+};
 
 const UserBadge = () => {
   const { user, logout, isKoordinator } = useAuth();
   if (!user) return null;
   return (
-    <div className="flex items-center gap-2" data-testid="user-badge">
+    <div className="flex items-center gap-1" data-testid="user-badge">
       <span
         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
           isKoordinator ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
@@ -85,6 +92,7 @@ const UserBadge = () => {
         {isKoordinator ? <ShieldCheck className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
         {user.username} · {isKoordinator ? 'Koordinator' : 'Petugas'}
       </span>
+      <ChangePasswordButton />
       <Button variant="ghost" size="sm" onClick={logout} data-testid="logout-button" title="Keluar">
         <LogOut className="h-4 w-4" />
       </Button>

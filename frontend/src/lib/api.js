@@ -31,6 +31,10 @@ client.interceptors.response.use(
 export const api = {
   login: (username, password) => client.post('/auth/login', { username, password }).then((r) => r.data),
   me: () => client.get('/auth/me').then((r) => r.data),
+  changePassword: (body) => client.post('/auth/change-password', body).then((r) => r.data),
+  listUsers: () => client.get('/users').then((r) => r.data),
+  createUser: (body) => client.post('/users', body).then((r) => r.data),
+  deleteUser: (username) => client.delete(`/users/${encodeURIComponent(username)}`).then((r) => r.data),
   health: () => client.get('/health').then((r) => r.data),
   excelSummary: () => client.get('/meta/excel-summary').then((r) => r.data),
   periods: () => client.get('/meta/periods').then((r) => r.data),
