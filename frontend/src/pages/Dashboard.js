@@ -46,7 +46,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Hero */}
-      <div className="rounded-xl border bg-gradient-to-r from-slate-50 via-teal-50 to-slate-50 p-5">
+      <div className="rounded-xl border bg-gradient-to-r from-slate-50 via-teal-50 to-slate-50 p-5 dark:from-slate-900 dark:via-teal-950 dark:to-slate-900">
         <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Selamat datang di LabStock</h2>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
           Sistem pemantauan stok reagen Laboratorium Patologi Klinik. Menggantikan file Excel

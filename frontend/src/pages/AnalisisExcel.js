@@ -35,7 +35,7 @@ export default function AnalisisExcel() {
 
   return (
     <div className="space-y-4" data-testid="analisis-excel-page">
-      <div className="rounded-xl border bg-gradient-to-r from-slate-50 via-teal-50 to-slate-50 p-5">
+      <div className="rounded-xl border bg-gradient-to-r from-slate-50 via-teal-50 to-slate-50 p-5 dark:from-slate-900 dark:via-teal-950 dark:to-slate-900">
         <div className="flex items-center gap-2 text-sm font-semibold"><FileSpreadsheet className="h-4 w-4 text-primary" /> {d.file}</div>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{d.ringkasan}</p>
       </div>

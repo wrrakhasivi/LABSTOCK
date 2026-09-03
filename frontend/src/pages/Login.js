@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { FlaskConical, Loader2 } from 'lucide-react';
+import { ThemeToggleButton } from '../components/ThemeToggle';
 
 export default function Login() {
   const { login } = useAuth();
@@ -28,6 +29,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+      <ThemeToggleButton className="fixed right-4 top-4" />
       <Card className="w-full max-w-sm p-6" data-testid="login-card">
         <div className="mb-6 flex flex-col items-center gap-2">
           <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary text-primary-foreground">

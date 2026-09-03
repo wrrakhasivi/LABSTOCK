@@ -53,7 +53,7 @@ function EditableNumber({ value, onSave, testid, alignCls = 'text-right', valueC
           ref={inputRef}
           type="number"
           data-testid={`${testid}-input`}
-          className="num h-7 w-16 rounded border border-primary bg-white px-1 text-right text-sm outline-none ring-2 ring-ring"
+          className="num h-7 w-16 rounded border border-primary bg-background px-1 text-right text-sm outline-none ring-2 ring-ring"
           value={val}
           onChange={(e) => setVal(e.target.value)}
           onBlur={commit}

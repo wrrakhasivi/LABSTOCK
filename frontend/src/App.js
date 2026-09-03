@@ -4,6 +4,7 @@ import './App.css';
 import { Toaster } from './components/ui/sonner';
 import { PeriodProvider } from './lib/period';
 import { AuthProvider, useAuth } from './lib/auth';
+import { ThemeProvider } from './lib/theme';
 import { AppShell } from './components/AppShell';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -42,12 +43,14 @@ function Gate() {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Gate />
-        <Toaster position="top-right" richColors />
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Gate />
+          <Toaster position="top-right" richColors />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

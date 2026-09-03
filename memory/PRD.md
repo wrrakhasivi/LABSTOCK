@@ -86,6 +86,14 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   ReDoS; (4) `POST /api/lis/import` dibatasi `MAX_LIS_FILES=50` & `MAX_LIS_FILE_SIZE=10MB`/file. Tested:
   testing_agent iteration_6 – backend 11/11 pytest (`tests/test_security_fixes.py`), frontend 100% PASS.
 
+- **(2026-09-03) Dark Mode + Toggle**: `.dark` CSS variable block ditambahkan di `index.css` (background,
+  foreground, card, primary, dst.). `lib/theme.js` (ThemeProvider, localStorage `ls_theme`, hormati
+  prefers-color-scheme) + `components/ThemeToggle.js` (ikon Matahari/Bulan) — tombol tersedia di halaman Login
+  (pojok kanan atas) dan topbar semua halaman terautentikasi. Preferensi tema persisten lintas reload &
+  logout/login (localStorage, bukan sessionStorage). Perbaikan kontras: hero banner Dashboard & AnalisisExcel
+  (gradient gelap di dark mode), badge "Perlu Cek", pill role Petugas/Koordinator, input edit Saldo Awal/QC.
+  Tested: testing_agent iteration_7 – frontend 100% PASS, tidak ada regresi mode terang.
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.

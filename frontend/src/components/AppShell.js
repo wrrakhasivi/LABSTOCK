@@ -10,6 +10,7 @@ import { Button } from './ui/button';
 import { usePeriod } from '../lib/period';
 import { useAuth } from '../lib/auth';
 import { ChangePasswordButton } from './ChangePasswordDialog';
+import { ThemeToggleButton } from './ThemeToggle';
 import { MONTHS_ID } from '../lib/api';
 
 const NAV = [
@@ -85,7 +86,7 @@ const UserBadge = () => {
     <div className="flex items-center gap-1" data-testid="user-badge">
       <span
         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-          isKoordinator ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+          isKoordinator ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
         }`}
         data-testid="user-role-badge"
       >
@@ -93,6 +94,7 @@ const UserBadge = () => {
         {user.username} · {isKoordinator ? 'Koordinator' : 'Petugas'}
       </span>
       <ChangePasswordButton />
+      <ThemeToggleButton />
       <Button variant="ghost" size="sm" onClick={logout} data-testid="logout-button" title="Keluar">
         <LogOut className="h-4 w-4" />
       </Button>
