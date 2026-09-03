@@ -8,11 +8,13 @@ import { api } from '../lib/api';
 
 export const WhatsAppCard = ({ year, month }) => {
   const [prev, setPrev] = useState(null);
+  const [jadwal, setJadwal] = useState(null);
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const load = () => api.waPreview(year, month).then(setPrev).catch(() => setPrev(null));
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [year, month]);
+  useEffect(() => { api.waJadwal().then(setJadwal).catch(() => setJadwal(null)); }, []);
 
   const send = async () => {
     setBusy(true);
@@ -22,6 +24,7 @@ export const WhatsAppCard = ({ year, month }) => {
         ? `Terkirim sebagai template (${res.note})`
         : `Notifikasi WhatsApp terkirim: ${res.critical} kritis, ${res.warning} waspada`);
       load();
+      api.waJadwal().then(setJadwal).catch(() => {});
     } catch (e) {
       toast.error(e?.response?.data?.detail || 'Gagal mengirim WhatsApp');
     } finally { setBusy(false); }
@@ -62,10 +65,16 @@ export const WhatsAppCard = ({ year, month }) => {
         </Button>
         {last && (
           <span className="text-xs text-muted-foreground" data-testid="whatsapp-last-sent">
-            Terakhir: {new Date(last.created_at).toLocaleString('id-ID')} · {last.ok ? 'berhasil' : 'gagal'}
+            Terakhir: {new Date(last.created_at).toLocaleString('id-ID')} · {last.ok ? 'berhasil' : 'gagal'}{last.auto ? ' (otomatis)' : ''}
           </span>
         )}
       </div>
+      {jadwal?.enabled && (
+        <p className="mt-2 text-xs text-muted-foreground" data-testid="whatsapp-schedule-info">
+          Terjadwal otomatis setiap hari pukul <b>{jadwal.jam} WIB</b>
+          {jadwal.sudah_terkirim_hari_ini ? ' · sudah terkirim hari ini' : ''}.
+        </p>
+      )}
       {!prev?.configured && prev && (
         <p className="mt-2 text-xs text-muted-foreground">
           Pengiriman otomatis butuh <b>WHATSAPP_ACCESS_TOKEN</b> dan <b>WHATSAPP_PHONE_NUMBER_ID</b> (Meta for Developers → WhatsApp → API Setup) di <code>backend/.env</code>.

@@ -192,6 +192,17 @@ function MappingTab() {
     return !!key && (data?.items || []).some((m) => (m.lis_name || '').trim().toLowerCase() === key);
   };
 
+  const removeMapping = async (m) => {
+    if (!window.confirm(`Hapus pemetaan test "${m.lis_name}"? Test LIS ini tidak akan lagi dihitung ke pemakaian reagen.`)) return;
+    try {
+      await api.deleteMapping(m.id);
+      toast.success(`Pemetaan "${m.lis_name}" dihapus`);
+      load();
+    } catch (e) {
+      toast.error('Gagal menghapus pemetaan');
+    }
+  };
+
   const create = async () => {
     const lisName = (adding?.lis_name || '').trim();
     if (!lisName) { toast.error('Nama Test (LIS) wajib diisi'); return; }
@@ -262,9 +273,14 @@ function MappingTab() {
                       )}
                     </td>
                     <td className="px-4 py-2 text-center">
-                      <Button size="sm" variant="outline" data-testid={`mapping-edit-button-${m.id}`} onClick={() => setEditing({ ...m, reagen_name: m.reagen_name || '' })}>
-                        <Pencil className="mr-1 h-3 w-3" /> Edit
-                      </Button>
+                      <div className="inline-flex items-center gap-1.5">
+                        <Button size="sm" variant="outline" data-testid={`mapping-edit-button-${m.id}`} onClick={() => setEditing({ ...m, reagen_name: m.reagen_name || '' })}>
+                          <Pencil className="mr-1 h-3 w-3" /> Edit
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10" data-testid={`mapping-delete-button-${m.id}`} onClick={() => removeMapping(m)}>
+                          <Trash2 className="mr-1 h-3 w-3" /> Hapus
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -2,8 +2,10 @@
 import os
 import re
 import uuid
+import asyncio
 import logging
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from typing import Optional
 
 from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File
@@ -434,6 +436,59 @@ async def wa_send(payload: AutoSaldoBody):
     return {'ok': True, 'critical': n_crit, 'warning': n_warn, **info}
 
 
+# ---------- Jadwal Otomatis WhatsApp (setiap hari pukul 07:00 WIB) ----------
+JAKARTA_TZ = ZoneInfo('Asia/Jakarta')
+AUTO_HOUR, AUTO_MINUTE = 7, 0
+
+
+async def _sudah_dikirim_hari_ini(tanggal_str: str) -> bool:
+    doc = await import_log_col.find_one(
+        {'type': 'whatsapp', 'auto': True, 'sent_date': tanggal_str}, {'_id': 0})
+    return doc is not None
+
+
+async def _kirim_whatsapp_otomatis(now):
+    """Hitung monitoring bulan berjalan (waktu Jakarta) & kirim notifikasi WhatsApp."""
+    tanggal_str = now.strftime('%Y-%m-%d')
+    data = await _compute_monitoring(now.year, now.month)
+    body, n_crit, n_warn = wa.build_message(data['label'], data['rows'])
+    ok, info = await wa.send_text(body)
+    await import_log_col.insert_one({
+        'id': str(uuid.uuid4()), 'type': 'whatsapp', 'auto': True, 'sent_date': tanggal_str,
+        'period': f'{now.year}-{now.month:02d}', 'recipient': wa.config()['recipient'],
+        'ok': ok, 'critical': n_crit, 'warning': n_warn, 'info': info,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+    })
+    logger.info(f'Notifikasi WhatsApp otomatis ({tanggal_str}): ok={ok} kritis={n_crit} waspada={n_warn}')
+
+
+async def _wa_scheduler_loop():
+    """Cek setiap menit; kirim WhatsApp otomatis sekali per hari pada pukul 07:00 WIB."""
+    while True:
+        try:
+            now = datetime.now(JAKARTA_TZ)
+            if now.hour == AUTO_HOUR and now.minute == AUTO_MINUTE and wa.is_configured():
+                tanggal_str = now.strftime('%Y-%m-%d')
+                if not await _sudah_dikirim_hari_ini(tanggal_str):
+                    await _kirim_whatsapp_otomatis(now)
+        except Exception as e:  # pragma: no cover
+            logger.exception(f'Gagal menjalankan jadwal WhatsApp otomatis: {e}')
+        await asyncio.sleep(60)
+
+
+@api.get('/notifikasi/whatsapp/jadwal')
+async def wa_jadwal_info():
+    """Info jadwal notifikasi otomatis untuk ditampilkan di UI."""
+    now = datetime.now(JAKARTA_TZ)
+    tanggal_str = now.strftime('%Y-%m-%d')
+    return {
+        'enabled': wa.is_configured(),
+        'jam': f'{AUTO_HOUR:02d}:{AUTO_MINUTE:02d}',
+        'timezone': 'Asia/Jakarta (WIB)',
+        'sudah_terkirim_hari_ini': await _sudah_dikirim_hari_ini(tanggal_str),
+    }
+
+
 # ---------- Mapping & LIS (read-only in phase 1) ----------
 class MappingUpdate(BaseModel):
     reagen_name: Optional[str] = None
@@ -522,6 +577,17 @@ async def create_mapping(payload: MappingCreate):
     if sync:
         doc['sync'] = sync
     return doc
+
+
+@api.delete('/mapping-tests/{mapping_id}')
+async def delete_mapping(mapping_id: str):
+    """Hapus satu pemetaan Nama Test (LIS) yang tidak terpakai."""
+    doc = await mapping_col.find_one({'id': mapping_id}, {'_id': 0})
+    if not doc:
+        raise HTTPException(404, 'Pemetaan tidak ditemukan')
+    await mapping_col.delete_one({'id': mapping_id})
+    await seed_store.remove_mapping(doc.get('lis_name'))
+    return {'ok': True}
 
 
 async def _sync_master_reagen(old_name, new_name):
@@ -768,3 +834,4 @@ async def startup():
         logger.info(f'Seed result: {res}')
     except Exception as e:  # pragma: no cover
         logger.exception(f'Seeding failed: {e}')
+    asyncio.create_task(_wa_scheduler_loop())

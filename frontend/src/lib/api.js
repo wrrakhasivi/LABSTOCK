@@ -27,6 +27,8 @@ export const api = {
   mappingTests: (status) => client.get('/mapping-tests', { params: { status } }).then((r) => r.data),
   updateMapping: (id, body) => client.put(`/mapping-tests/${id}`, body).then((r) => r.data),
   createMapping: (body) => client.post('/mapping-tests', body).then((r) => r.data),
+  deleteMapping: (id) => client.delete(`/mapping-tests/${id}`).then((r) => r.data),
+  waJadwal: () => client.get('/notifikasi/whatsapp/jadwal').then((r) => r.data),
   lisSourceFiles: (period) => client.get('/lis/source-files', { params: { period } }).then((r) => r.data),
   deleteLisSourceFile: (sf) => client.delete(`/lis/source-file/${encodeURIComponent(sf)}`).then((r) => r.data),
   lisRaw: (period, limit = 300, skip = 0) => client.get('/lis/raw', { params: { period, limit, skip } }).then((r) => r.data),

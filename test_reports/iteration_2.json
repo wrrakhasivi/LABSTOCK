@@ -1,0 +1,32 @@
+{
+  "summary": "Tested 3 new features on top of stable LabStock base: (1) DELETE /api/mapping-tests/{id} + UI Hapus button, (2) GET /api/notifikasi/whatsapp/jadwal + dashboard WhatsApp schedule info, (3) WhatsApp preview '(sudah PRF)' suffix. Backend: 6/6 pytest passed. Frontend: schedule info renders '07:00 WIB' on dashboard, all 247 mapping rows have both Edit and Hapus buttons, full add->search->confirm-delete flow works and toast 'Pemetaan ... dihapus' shows. Regression on mapping add/edit PASS. Backend scheduler task starts without errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "passed_tests": [
+    "GET /api/health returns ok",
+    "GET /api/notifikasi/whatsapp/jadwal returns {enabled, jam:'07:00', timezone: 'Asia/Jakarta (WIB)', sudah_terkirim_hari_ini}",
+    "POST /api/mapping-tests creates mapping and persists to seed_data.json (Mapping_Test)",
+    "DELETE /api/mapping-tests/{id} removes from DB and from seed_data.json; second call returns 404",
+    "PUT /api/mapping-tests/{id} update regression works",
+    "GET /api/notifikasi/whatsapp/preview shows '(sudah PRF)' suffix only for reagen with a PRF in current period; not shown when no PRF",
+    "UI: Dashboard shows data-testid=whatsapp-schedule-info with text 'Terjadwal otomatis setiap hari pukul 07:00 WIB'",
+    "UI: Pemetaan Test tab shows Hapus (Trash2) button next to Edit on every row (247/247)",
+    "UI: Tambah Pemetaan -> row appears -> Hapus with confirm -> row disappears + success toast",
+    "Backend scheduler _wa_scheduler_loop starts without errors on startup"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_new_features.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "WhatsAppCard fetches jadwal only once on mount (useEffect with [] deps); after actual send the 'sudah_terkirim_hari_ini' flag would remain stale until page refresh. Minor UX polish only.",
+    "server.py getting large (~840 lines); consider splitting mapping/monitoring/whatsapp routers into separate modules for maintainability."
+  ],
+  "updated_files": ["/app/backend/tests/test_new_features.py"],
+  "success_rate": {"backend": "100% (6/6)", "frontend": "100% (all new flows verified)"},
+  "seed_data_creation": "No permanent seed changes; test used TEST_MAPPING_DEL_XYZ and TEST_UI_DEL_MAP which were both deleted (verified in seed_data.json).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 3 new features (hapus pemetaan with seed persistence, WhatsApp jadwal 07:00 WIB endpoint + UI info, and '(sudah PRF)' suffix in preview) verified end-to-end. pytest file at /app/backend/tests/test_new_features.py can be reused for regression."
+}

@@ -55,6 +55,21 @@ async def persist_mapping(lis_name, reagen_name, status):
             logger.exception(f'persist_mapping gagal: {e}')
 
 
+async def remove_mapping(lis_name):
+    """Hapus satu baris Mapping_Test dari seed_data.json (kunci: lis_name, case-insensitive)."""
+    if not lis_name:
+        return
+    async with _lock:
+        try:
+            data = _load()
+            items = data.get('Mapping_Test', [])
+            key = _norm(lis_name)
+            data['Mapping_Test'] = [m for m in items if _norm(m.get('lis_name')) != key]
+            _save(data)
+        except Exception as e:
+            logger.exception(f'remove_mapping gagal: {e}')
+
+
 async def persist_reagen_rename(old_name, new_name):
     """Ganti nama reagen di semua sheet seed (master, PRF, penerimaan, PQ, mapping, extra)."""
     if not old_name or not new_name or _norm(old_name) == _norm(new_name):

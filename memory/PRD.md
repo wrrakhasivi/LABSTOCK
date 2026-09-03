@@ -37,9 +37,23 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
 - Ekspor Excel (`backend/export_excel.py`, `GET /api/monitoring/export`): kolom harian 1-31, warna status per baris.
 - Hapus Periode: `GET /api/monitoring/periode-info`, `DELETE /api/monitoring/periode?hapus_lis=` + dialog konfirmasi
   (komponen `frontend/src/components/PeriodActions.js`).
+- Kolom harian dipersempit (`index.css` `.ls-day-col`), "Sorot Hari Ini" (highlight tanggal aktif) di PemantauanStok.js.
+- Pemetaan Test persisten ke `seed/seed_data.json` (`seed_store.py`: persist_mapping, persist_reagen_rename,
+  persist_new_reagen, remove_mapping) + tombol "Tambah Pemetaan" (modal) di DataLIS.js.
+- WhatsApp Meta Cloud API terkonfigurasi & teruji (token, phone_id, recipient di backend/.env). Error Meta #131030
+  (nomor belum di allowed list mode test) ditangani → HTTP 424 + hint Indonesia.
+- **(2026-09-03) Hapus Pemetaan**: `DELETE /api/mapping-tests/{id}` + tombol "Hapus" di setiap baris Pemetaan Test
+  (DataLIS.js), hapus dari DB & seed_data.json.
+- **(2026-09-03) Jadwal Otomatis WhatsApp**: `_wa_scheduler_loop` (asyncio task, server.py) cek setiap 60 detik,
+  kirim otomatis sekali/hari pukul 07:00 WIB (Asia/Jakarta) via `_kirim_whatsapp_otomatis`, idempoten lewat
+  `import_log` (type=whatsapp, auto=True, sent_date). `GET /api/notifikasi/whatsapp/jadwal` untuk info UI;
+  WhatsAppCard menampilkan "Terjadwal otomatis setiap hari pukul 07:00 WIB".
+- **(2026-09-03) Keterangan "sudah PRF"**: `whatsapp.py build_message()` menambahkan "(sudah PRF)" pada baris
+  reagen Kritis/Waspada yang sudah punya PRF di periode berjalan (`row['prf']` non-empty).
+- Tested: `testing_agent` iteration_2 – backend 6/6 pytest, frontend semua flow baru PASS.
 
 ## Backlog
-- P1: Isi kredensial Meta WhatsApp di backend/.env lalu uji kirim nyata; opsional jadwal kirim harian.
+- P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Login & Peran (Petugas vs Koordinator) – batasi Hapus Periode untuk Koordinator.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.
 

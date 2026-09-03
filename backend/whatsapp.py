@@ -21,16 +21,21 @@ def is_configured():
     return bool(c['token'] and c['phone_id'] and c['recipient'])
 
 
+def _prf_note(r):
+    """Tandai '(sudah PRF)' bila reagen ini sudah punya PRF pada periode berjalan."""
+    return ' (sudah PRF)' if r.get('prf') else ''
+
+
 def build_message(label, rows):
     crit = [r for r in rows if r['status'] == 'critical']
     warn = [r for r in rows if r['status'] == 'warning']
     lines = [f'*LabStock – Notifikasi Stok Reagen*', f'Periode: {label}', '']
     lines.append(f'*KRITIS ({len(crit)})*')
-    lines += [f'- {r["nama_reagen"]}: sisa {_n(r["sisa_stock"])} / buffer {_n(r["buffer_stock"])}'
+    lines += [f'- {r["nama_reagen"]}: sisa {_n(r["sisa_stock"])} / buffer {_n(r["buffer_stock"])}{_prf_note(r)}'
               for r in crit] or ['- (tidak ada)']
     lines.append('')
     lines.append(f'*WASPADA ({len(warn)})*')
-    lines += [f'- {r["nama_reagen"]}: sisa {_n(r["sisa_stock"])} / buffer {_n(r["buffer_stock"])}'
+    lines += [f'- {r["nama_reagen"]}: sisa {_n(r["sisa_stock"])} / buffer {_n(r["buffer_stock"])}{_prf_note(r)}'
               for r in warn] or ['- (tidak ada)']
     body = '\n'.join(lines)
     if len(body) > MAX_BODY:
