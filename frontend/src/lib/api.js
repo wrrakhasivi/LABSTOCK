@@ -2,10 +2,35 @@ import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
+export const AUTH_STORAGE_KEY = 'ls_auth';
 
 const client = axios.create({ baseURL: API });
 
+client.interceptors.request.use((config) => {
+  try {
+    const raw = sessionStorage.getItem(AUTH_STORAGE_KEY);
+    if (raw) {
+      const { token } = JSON.parse(raw);
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (e) { /* ignore */ }
+  return config;
+});
+
+client.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err?.response?.status === 401) {
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      window.dispatchEvent(new Event('ls-auth-expired'));
+    }
+    return Promise.reject(err);
+  },
+);
+
 export const api = {
+  login: (username, password) => client.post('/auth/login', { username, password }).then((r) => r.data),
+  me: () => client.get('/auth/me').then((r) => r.data),
   health: () => client.get('/health').then((r) => r.data),
   excelSummary: () => client.get('/meta/excel-summary').then((r) => r.data),
   periods: () => client.get('/meta/periods').then((r) => r.data),

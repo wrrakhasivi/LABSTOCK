@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api, fmtNum } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -12,6 +13,7 @@ import { toast } from 'sonner';
 import { Search, Pencil } from 'lucide-react';
 
 export default function MasterReagen() {
+  const { isKoordinator } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
@@ -72,7 +74,7 @@ export default function MasterReagen() {
                   <th className="px-3 py-2 text-right">AVG 2023</th>
                   <th className="px-3 py-2 text-right">Buffer Stock</th>
                   <th className="px-3 py-2 text-left">Satuan</th>
-                  <th className="px-3 py-2 text-center">Aksi</th>
+                  {isKoordinator && <th className="px-3 py-2 text-center">Aksi</th>}
                 </tr>
               </thead>
               <tbody>
@@ -84,11 +86,13 @@ export default function MasterReagen() {
                     <td className="num px-3 py-2 text-right">{fmtNum(r.avg_2023)}</td>
                     <td className="num px-3 py-2 text-right">{fmtNum(r.buffer_stock)}</td>
                     <td className="px-3 py-2 text-left text-muted-foreground">{r.satuan}</td>
-                    <td className="px-3 py-2 text-center">
-                      <Button size="sm" variant="outline" data-testid={`master-reagen-edit-button-${r.id}`} onClick={() => setEditing({ ...r, qty_per_kit: r.qty_per_kit ?? '', avg_2022: r.avg_2022 ?? '', avg_2023: r.avg_2023 ?? '', buffer_stock: r.buffer_stock ?? '', item_code: r.item_code ?? '' })}>
-                        <Pencil className="mr-1 h-3 w-3" /> Edit
-                      </Button>
-                    </td>
+                    {isKoordinator && (
+                      <td className="px-3 py-2 text-center">
+                        <Button size="sm" variant="outline" data-testid={`master-reagen-edit-button-${r.id}`} onClick={() => setEditing({ ...r, qty_per_kit: r.qty_per_kit ?? '', avg_2022: r.avg_2022 ?? '', avg_2023: r.avg_2023 ?? '', buffer_stock: r.buffer_stock ?? '', item_code: r.item_code ?? '' })}>
+                          <Pencil className="mr-1 h-3 w-3" /> Edit
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

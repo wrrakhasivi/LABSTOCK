@@ -31,3 +31,4 @@ async def ensure_indexes():
     await prf_col.create_index('period')
     await mapping_col.create_index('lis_name')
     await lis_raw_col.create_index('period')
+    await users_col.create_index('username', unique=True)

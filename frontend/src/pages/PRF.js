@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { usePeriod } from '../lib/period';
 import { api, fmtDate } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -54,6 +55,7 @@ function ReagenPicker({ reagens, value, onChange }) {
 }
 
 export default function PRF() {
+  const { isKoordinator } = useAuth();
   const { year, month } = usePeriod();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -140,7 +142,7 @@ export default function PRF() {
             Buat <span className="font-medium text-foreground">Purchase Request (PRF)</span> pemesanan reagen untuk periode {period}. PRF yang dibuat dapat diterima di tab Penerimaan (otomatis menambah Stok Masuk).
           </p>
         </div>
-        <Button onClick={openCreate} data-testid="prf-add-button" className="shrink-0">
+        <Button onClick={openCreate} data-testid="prf-add-button" className="shrink-0" disabled={!isKoordinator} title={!isKoordinator ? 'Hanya Koordinator yang dapat menambah PRF' : undefined}>
           <Plus className="mr-1.5 h-4 w-4" /> Tambah PRF
         </Button>
       </div>
@@ -163,7 +165,7 @@ export default function PRF() {
                   <th className="px-4 py-2 text-right">Jumlah Kit</th>
                   <th className="px-4 py-2 text-left">Tanggal PR</th>
                   <th className="px-4 py-2 text-center">Status</th>
-                  <th className="px-4 py-2 text-center">Aksi</th>
+                  {isKoordinator && <th className="px-4 py-2 text-center">Aksi</th>}
                 </tr>
               </thead>
               <tbody>
@@ -180,18 +182,20 @@ export default function PRF() {
                         <Badge variant="outline" className="text-amber-700 border-amber-300">Menunggu</Badge>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        {p.status !== 'received' && (
-                          <Button size="sm" variant="outline" onClick={() => openReceive(p)} data-testid={`prf-receive-button-${p.id}`}>
-                            <PackageCheck className="mr-1 h-3 w-3" /> Terima
+                    {isKoordinator && (
+                      <td className="px-4 py-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {p.status !== 'received' && (
+                            <Button size="sm" variant="outline" onClick={() => openReceive(p)} data-testid={`prf-receive-button-${p.id}`}>
+                              <PackageCheck className="mr-1 h-3 w-3" /> Terima
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => remove(p)} data-testid={`prf-delete-button-${p.id}`}>
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
                           </Button>
-                        )}
-                        <Button size="sm" variant="ghost" onClick={() => remove(p)} data-testid={`prf-delete-button-${p.id}`}>
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
-                      </div>
-                    </td>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

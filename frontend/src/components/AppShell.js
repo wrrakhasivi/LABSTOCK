@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Table2, FlaskConical, Database, FileText, PackageCheck,
-  BookOpen, Menu, X, RefreshCw, Activity,
+  BookOpen, Menu, X, RefreshCw, Activity, LogOut, ShieldCheck, Eye,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Button } from './ui/button';
 import { usePeriod } from '../lib/period';
+import { useAuth } from '../lib/auth';
 import { MONTHS_ID } from '../lib/api';
 
 const NAV = [
@@ -69,6 +71,27 @@ const SidebarContent = ({ onNavigate }) => (
   </div>
 );
 
+const UserBadge = () => {
+  const { user, logout, isKoordinator } = useAuth();
+  if (!user) return null;
+  return (
+    <div className="flex items-center gap-2" data-testid="user-badge">
+      <span
+        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+          isKoordinator ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+        }`}
+        data-testid="user-role-badge"
+      >
+        {isKoordinator ? <ShieldCheck className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+        {user.username} · {isKoordinator ? 'Koordinator' : 'Petugas'}
+      </span>
+      <Button variant="ghost" size="sm" onClick={logout} data-testid="logout-button" title="Keluar">
+        <LogOut className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
+
 const PeriodSelector = () => {
   const { periods, year, month, setYear, setMonth } = usePeriod();
   const years = Array.from(new Set(periods.map((p) => p.year)));
@@ -127,7 +150,10 @@ export const AppShell = ({ children }) => {
             </Sheet>
             <h1 className="text-base font-semibold tracking-tight sm:text-lg" data-testid="page-title">{title}</h1>
           </div>
-          <PeriodSelector />
+          <div className="flex items-center gap-3">
+            <PeriodSelector />
+            <UserBadge />
+          </div>
         </header>
 
         <main className="px-3 py-4 sm:px-4 lg:px-6">{children}</main>

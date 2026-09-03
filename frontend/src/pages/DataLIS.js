@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { api, fmtNum } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -34,6 +35,7 @@ export default function DataLIS() {
 }
 
 function ImportTab() {
+  const { isKoordinator } = useAuth();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState(null);
@@ -55,6 +57,14 @@ function ImportTab() {
       toast.error(e?.response?.data?.detail || 'Gagal import LIS');
     } finally { setUploading(false); }
   };
+
+  if (!isKoordinator) {
+    return (
+      <Card className="p-8 text-center text-sm text-muted-foreground" data-testid="import-lis-readonly-notice">
+        Hanya Koordinator yang dapat mengimpor file LIS.
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -142,6 +152,7 @@ const Stat = ({ label, value }) => (
 
 
 function MappingTab() {
+  const { isKoordinator } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('all');
@@ -229,9 +240,11 @@ function MappingTab() {
         <Badge className="bg-emerald-600 text-white">OK: {data?.ok ?? 0}</Badge>
         <Badge className="bg-slate-500 text-white">TIDAK ADA: {data?.tidak_ada ?? 0}</Badge>
         <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" onClick={() => setAdding({ lis_name: '', reagen_name: '' })} data-testid="mapping-add-button">
-            <Plus className="mr-1 h-4 w-4" /> Tambah Pemetaan
-          </Button>
+          {isKoordinator && (
+            <Button size="sm" onClick={() => setAdding({ lis_name: '', reagen_name: '' })} data-testid="mapping-add-button">
+              <Plus className="mr-1 h-4 w-4" /> Tambah Pemetaan
+            </Button>
+          )}
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Cari test LIS..." value={q} onChange={(e) => setQ(e.target.value)} className="h-9 w-[200px] pl-8" data-testid="mapping-search" />
@@ -257,7 +270,7 @@ function MappingTab() {
                   <th className="px-4 py-2 text-left">Nama Test LIS</th>
                   <th className="px-4 py-2 text-left">Nama Reagen Monitoring</th>
                   <th className="px-4 py-2 text-center">Status</th>
-                  <th className="px-4 py-2 text-center">Aksi</th>
+                  {isKoordinator && <th className="px-4 py-2 text-center">Aksi</th>}
                 </tr>
               </thead>
               <tbody>
@@ -272,16 +285,18 @@ function MappingTab() {
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500"><XCircle className="h-3.5 w-3.5" /> TIDAK ADA</span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-center">
-                      <div className="inline-flex items-center gap-1.5">
-                        <Button size="sm" variant="outline" data-testid={`mapping-edit-button-${m.id}`} onClick={() => setEditing({ ...m, reagen_name: m.reagen_name || '' })}>
-                          <Pencil className="mr-1 h-3 w-3" /> Edit
-                        </Button>
-                        <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10" data-testid={`mapping-delete-button-${m.id}`} onClick={() => removeMapping(m)}>
-                          <Trash2 className="mr-1 h-3 w-3" /> Hapus
-                        </Button>
-                      </div>
-                    </td>
+                    {isKoordinator && (
+                      <td className="px-4 py-2 text-center">
+                        <div className="inline-flex items-center gap-1.5">
+                          <Button size="sm" variant="outline" data-testid={`mapping-edit-button-${m.id}`} onClick={() => setEditing({ ...m, reagen_name: m.reagen_name || '' })}>
+                            <Pencil className="mr-1 h-3 w-3" /> Edit
+                          </Button>
+                          <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10" data-testid={`mapping-delete-button-${m.id}`} onClick={() => removeMapping(m)}>
+                            <Trash2 className="mr-1 h-3 w-3" /> Hapus
+                          </Button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -381,6 +396,7 @@ function MappingTab() {
 }
 
 function RawTab() {
+  const { isKoordinator } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('2026-07');
@@ -431,14 +447,16 @@ function RawTab() {
               <div key={s.source_file} className="flex items-center gap-2 rounded-md border bg-muted/30 py-1 pl-3 pr-1 text-xs" data-testid={`source-file-item-${s.source_file}`}>
                 <span className="font-medium">{s.source_file}</span>
                 <Badge variant="secondary" className="text-[10px]">{s.tests} test</Badge>
-                <button
-                  onClick={() => removeSource(s.source_file)}
-                  data-testid={`source-file-delete-${s.source_file}`}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded hover:bg-destructive/10"
-                  title="Hapus source file ini"
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                </button>
+                {isKoordinator && (
+                  <button
+                    onClick={() => removeSource(s.source_file)}
+                    data-testid={`source-file-delete-${s.source_file}`}
+                    className="inline-flex h-6 w-6 items-center justify-center rounded hover:bg-destructive/10"
+                    title="Hapus source file ini"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </button>
+                )}
               </div>
             ))}
           </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePeriod } from '../lib/period';
 import { api, fmtNum, MONTHS_ID } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { StatusBadge } from '../components/StatusBadge';
 import { ExportButton, DeletePeriodButton } from '../components/PeriodActions';
 import { Card } from '../components/ui/card';
@@ -23,12 +24,13 @@ const FILTERS = [
 ];
 
 // Inline-editable numeric cell (click to edit; Enter/blur = simpan, Esc = batal, kosong = null)
-function EditableNumber({ value, onSave, testid, alignCls = 'text-right', valueCls = '', marker = null, title }) {
+function EditableNumber({ value, onSave, testid, alignCls = 'text-right', valueCls = '', marker = null, title, editable = true }) {
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState('');
   const inputRef = useRef(null);
 
   const start = () => {
+    if (!editable) return;
     setVal(value === null || value === undefined ? '' : String(value));
     setEditing(true);
   };
@@ -66,21 +68,22 @@ function EditableNumber({ value, onSave, testid, alignCls = 'text-right', valueC
 
   return (
     <td
-      className={`num group/edit cursor-pointer border-b px-2 py-1.5 ${alignCls} ${valueCls} hover:bg-primary/5`}
+      className={`num ${editable ? 'group/edit cursor-pointer hover:bg-primary/5' : ''} border-b px-2 py-1.5 ${alignCls} ${valueCls}`}
       data-testid={testid}
-      title={title || 'Klik untuk edit'}
+      title={editable ? (title || 'Klik untuk edit') : title}
       onClick={start}
     >
       <span className="inline-flex items-center gap-1">
         {marker}
         {fmtNum(value)}
-        <Pencil className="h-3 w-3 opacity-0 text-muted-foreground transition-opacity group-hover/edit:opacity-70" />
+        {editable && <Pencil className="h-3 w-3 opacity-0 text-muted-foreground transition-opacity group-hover/edit:opacity-70" />}
       </span>
     </td>
   );
 }
 
 export default function PemantauanStok() {
+  const { isKoordinator } = useAuth();
   const { year, month, setYear, setMonth, refreshPeriods } = usePeriod();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -195,12 +198,12 @@ export default function PemantauanStok() {
               className="h-9 w-[200px] pl-8"
             />
           </div>
-          <Button variant="outline" size="sm" onClick={runAuto} disabled={autoLoading} data-testid="auto-saldo-awal-button" title="Isi Saldo Awal = Sisa Stok bulan sebelumnya">
+          <Button variant="outline" size="sm" onClick={runAuto} disabled={autoLoading || !isKoordinator} data-testid="auto-saldo-awal-button" title={isKoordinator ? 'Isi Saldo Awal = Sisa Stok bulan sebelumnya' : 'Hanya Koordinator yang dapat mengubah saldo awal'}>
             <Wand2 className="mr-1.5 h-3.5 w-3.5" /> {autoLoading ? 'Memproses...' : 'Saldo Awal Otomatis'}
           </Button>
           <AlertDialog open={newPeriodOpen} onOpenChange={setNewPeriodOpen}>
             <AlertDialogTrigger asChild>
-              <Button size="sm" data-testid="new-period-button" title={`Buat periode ${nextLabel}`}>
+              <Button size="sm" data-testid="new-period-button" title={`Buat periode ${nextLabel}`} disabled={!isKoordinator}>
                 <CalendarPlus className="mr-1.5 h-3.5 w-3.5" /> Periode Bulan Baru
               </Button>
             </AlertDialogTrigger>
@@ -221,7 +224,7 @@ export default function PemantauanStok() {
             </AlertDialogContent>
           </AlertDialog>
           <ExportButton year={year} month={month} />
-          <DeletePeriodButton year={year} month={month} label={data?.label || `${month}/${year}`} />
+          {isKoordinator && <DeletePeriodButton year={year} month={month} label={data?.label || `${month}/${year}`} />}
           <Button variant="outline" size="sm" onClick={load} data-testid="pemantauan-reload-button">
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Muat Ulang
           </Button>
@@ -300,7 +303,8 @@ export default function PemantauanStok() {
                         value={r.saldo_awal}
                         onSave={(v) => saveSaldo(r, v)}
                         testid={`saldo-awal-${r.reagen_id}`}
-                        title="Klik untuk edit Saldo Awal"
+                        title={isKoordinator ? 'Klik untuk edit Saldo Awal' : 'Saldo Awal'}
+                        editable={isKoordinator}
                       />
                       {dayCols.map((d) => {
                         const v = r.hari?.[String(d)] || 0;
@@ -313,7 +317,8 @@ export default function PemantauanStok() {
                         onSave={(v) => saveQc(r, v)}
                         testid={`qc-${r.reagen_id}`}
                         alignCls="ls-sum-col text-right border-l"
-                        title="Klik untuk input manual QC"
+                        title={isKoordinator ? 'Klik untuk input manual QC' : 'QC'}
+                        editable={isKoordinator}
                       />
                       <td className="num ls-sum-col border-b py-1.5 text-right font-semibold">{fmtNum(r.total_pemakaian)}</td>
                       <td className="num ls-sum-col border-b py-1.5 text-right">{fmtNum(r.stok_masuk)}</td>

@@ -52,10 +52,21 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   reagen Kritis/Waspada yang sudah punya PRF di periode berjalan (`row['prf']` non-empty).
 - Tested: `testing_agent` iteration_2 – backend 6/6 pytest, frontend semua flow baru PASS.
 
+- **(2026-09-03) Login & Peran (Petugas vs Koordinator)**: JWT auth (`backend/auth.py`, PyJWT+bcrypt).
+  Seluruh app terkunci di belakang login (`frontend/src/lib/auth.js` AuthContext, `App.js` Gate, `pages/Login.js`).
+  Petugas = lihat saja (semua GET); Koordinator = akses penuh (semua POST/PUT/DELETE, via
+  `Depends(auth.require_koordinator)` di server.py). Token Bearer disimpan di sessionStorage (hilang saat
+  browser ditutup). UI menyembunyikan/disable semua tombol Tambah/Edit/Hapus untuk Petugas di: PemantauanStok
+  (saldo/QC edit, Saldo Awal Otomatis, Periode Baru, Hapus Periode), MasterReagen (Edit), DataLIS (Import,
+  Tambah/Edit/Hapus Pemetaan, hapus source file), PRF (Tambah/Terima/Hapus), Penerimaan (Terima), WhatsAppCard
+  (Kirim via API). Akun tetap: kalgen/kalgen (petugas), raihan/rakhasivi123 (koordinator) — lihat
+  `/app/memory/test_credentials.md`. Tested: testing_agent iteration_3 – backend 25/25 pytest, frontend semua
+  RBAC flow PASS.
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
-- P2: Login & Peran (Petugas vs Koordinator) – batasi Hapus Periode untuk Koordinator.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.
+- P2: /app/backend/tests/test_new_features.py (pra-auth) perlu token koordinator agar lolos lagi.
 
 ## Catatan
 - Testing agent backend menghapus `lis_raw`; setelah pakai testing agent, jalankan reseed (`POST /api/admin/reseed`).

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { usePeriod } from '../lib/period';
 import { api, fmtDate, fmtNum } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -16,6 +17,7 @@ import { PackageCheck, Info, Clock, CheckCircle2 } from 'lucide-react';
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 export default function Penerimaan() {
+  const { isKoordinator } = useAuth();
   const { year, month } = usePeriod();
   const [pen, setPen] = useState(null);
   const [prf, setPrf] = useState(null);
@@ -83,7 +85,7 @@ export default function Penerimaan() {
                   <th className="px-4 py-2 text-center">Reagent Ke-</th>
                   <th className="px-4 py-2 text-right">Jumlah Kit</th>
                   <th className="px-4 py-2 text-left">Tanggal PR</th>
-                  <th className="px-4 py-2 text-center">Aksi</th>
+                  {isKoordinator && <th className="px-4 py-2 text-center">Aksi</th>}
                 </tr>
               </thead>
               <tbody>
@@ -93,11 +95,13 @@ export default function Penerimaan() {
                     <td className="px-4 py-2 text-center num">{p.reagent_no}</td>
                     <td className="px-4 py-2 text-right num">{p.kits}</td>
                     <td className="px-4 py-2">{fmtDate(p.tanggal_pr)}</td>
-                    <td className="px-4 py-2 text-center">
-                      <Button size="sm" variant="outline" onClick={() => openReceive(p)} data-testid={`penerimaan-terima-button-${p.id}`}>
-                        <PackageCheck className="mr-1 h-3 w-3" /> Terima
-                      </Button>
-                    </td>
+                    {isKoordinator && (
+                      <td className="px-4 py-2 text-center">
+                        <Button size="sm" variant="outline" onClick={() => openReceive(p)} data-testid={`penerimaan-terima-button-${p.id}`}>
+                          <PackageCheck className="mr-1 h-3 w-3" /> Terima
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

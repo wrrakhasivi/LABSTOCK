@@ -5,8 +5,10 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
 
 export const WhatsAppCard = ({ year, month }) => {
+  const { isKoordinator } = useAuth();
   const [prev, setPrev] = useState(null);
   const [jadwal, setJadwal] = useState(null);
   const [show, setShow] = useState(false);
@@ -49,8 +51,8 @@ export const WhatsAppCard = ({ year, month }) => {
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Button size="sm" onClick={send} disabled={busy || !prev?.configured} data-testid="whatsapp-send-button"
-          title={prev?.configured ? 'Kirim via Meta WhatsApp Cloud API' : 'Isi WHATSAPP_ACCESS_TOKEN & WHATSAPP_PHONE_NUMBER_ID di backend/.env'}>
+        <Button size="sm" onClick={send} disabled={busy || !prev?.configured || !isKoordinator} data-testid="whatsapp-send-button"
+          title={!isKoordinator ? 'Hanya Koordinator yang dapat mengirim notifikasi' : (prev?.configured ? 'Kirim via Meta WhatsApp Cloud API' : 'Isi WHATSAPP_ACCESS_TOKEN & WHATSAPP_PHONE_NUMBER_ID di backend/.env')}>
           <Send className="mr-1.5 h-3.5 w-3.5" /> {busy ? 'Mengirim...' : 'Kirim via API'}
         </Button>
         {prev?.wa_me && (

@@ -8,14 +8,14 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from typing import Optional
 
-from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Depends
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict
 from starlette.middleware.cors import CORSMiddleware
 
 from database import (
     reagen_col, stock_period_col, pemakaian_col, penerimaan_col,
-    prf_col, mapping_col, lis_raw_col, import_log_col,
+    prf_col, mapping_col, lis_raw_col, import_log_col, users_col,
 )
 from calculations import build_row, days_in_month, STATUS_LABEL
 from excel_analysis import EXCEL_SUMMARY
@@ -24,6 +24,7 @@ import seed_store
 from lis_import import import_files as lis_import_files
 from export_excel import build_workbook
 import whatsapp as wa
+import auth
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -87,13 +88,33 @@ async def health():
     return {'status': 'ok', 'seeded': await is_seeded()}
 
 
+# ---------- Auth ----------
+class LoginBody(BaseModel):
+    username: str
+    password: str
+
+
+@api.post('/auth/login')
+async def login(payload: LoginBody):
+    user = await users_col.find_one({'username': payload.username}, {'_id': 0})
+    if not user or not auth.verify_password(payload.password, user.get('password_hash', '')):
+        raise HTTPException(401, 'Username atau password salah')
+    token = auth.create_token(user['username'], user['role'])
+    return {'access_token': token, 'username': user['username'], 'role': user['role']}
+
+
+@api.get('/auth/me')
+async def me(user: dict = Depends(auth.get_current_user)):
+    return user
+
+
 @api.get('/meta/excel-summary')
-async def excel_summary():
+async def excel_summary(user: dict = Depends(auth.get_current_user)):
     return EXCEL_SUMMARY
 
 
 @api.get('/meta/periods')
-async def periods():
+async def periods(user: dict = Depends(auth.get_current_user)):
     """Distinct (year, month) available from stock_period, plus month name."""
     docs = await stock_period_col.find({}, {'_id': 0, 'year': 1, 'month': 1}).to_list(5000)
     seen = sorted({(d['year'], d['month']) for d in docs}, reverse=True)
@@ -101,14 +122,14 @@ async def periods():
 
 
 @api.post('/admin/reseed')
-async def reseed():
+async def reseed(user: dict = Depends(auth.require_koordinator)):
     res = await run_seed(force=True)
     return res
 
 
 # ---------- Master Reagen ----------
 @api.get('/reagen')
-async def list_reagen(query: Optional[str] = None):
+async def list_reagen(query: Optional[str] = None, user: dict = Depends(auth.get_current_user)):
     filt = {}
     if query:
         filt['nama_reagen'] = {'$regex': query, '$options': 'i'}
@@ -119,7 +140,7 @@ async def list_reagen(query: Optional[str] = None):
 
 
 @api.post('/reagen')
-async def create_reagen(payload: ReagenCreate):
+async def create_reagen(payload: ReagenCreate, user: dict = Depends(auth.require_koordinator)):
     import uuid
     existing = await reagen_col.find_one({'nama_reagen': payload.nama_reagen})
     if existing:
@@ -134,7 +155,7 @@ async def create_reagen(payload: ReagenCreate):
 
 
 @api.put('/reagen/{reagen_id}')
-async def update_reagen(reagen_id: str, payload: ReagenUpdate):
+async def update_reagen(reagen_id: str, payload: ReagenUpdate, user: dict = Depends(auth.require_koordinator)):
     updates = {k: v for k, v in payload.model_dump().items() if v is not None}
     if not updates:
         raise HTTPException(400, 'Tidak ada perubahan')
@@ -230,7 +251,7 @@ async def _compute_monitoring(year: int, month: int):
 
 
 @api.get('/monitoring')
-async def monitoring(year: int, month: int):
+async def monitoring(year: int, month: int, user: dict = Depends(auth.get_current_user)):
     if month < 1 or month > 12:
         raise HTTPException(400, 'Bulan tidak valid')
     return await _compute_monitoring(year, month)
@@ -276,7 +297,7 @@ class QcUpdate(BaseModel):
 
 
 @api.put('/monitoring/qc')
-async def set_qc(payload: QcUpdate):
+async def set_qc(payload: QcUpdate, user: dict = Depends(auth.require_koordinator)):
     """Input manual QC untuk sebuah reagen pada periode tertentu."""
     if payload.month < 1 or payload.month > 12:
         raise HTTPException(400, 'Bulan tidak valid')
@@ -286,7 +307,7 @@ async def set_qc(payload: QcUpdate):
 
 
 @api.put('/monitoring/saldo-awal')
-async def set_saldo_awal(payload: SaldoAwalUpdate):
+async def set_saldo_awal(payload: SaldoAwalUpdate, user: dict = Depends(auth.require_koordinator)):
     """Manual edit of Saldo Awal for a reagen in a period."""
     if payload.month < 1 or payload.month > 12:
         raise HTTPException(400, 'Bulan tidak valid')
@@ -296,7 +317,7 @@ async def set_saldo_awal(payload: SaldoAwalUpdate):
 
 
 @api.put('/monitoring/sisa-override')
-async def set_sisa_override(payload: SisaOverrideUpdate):
+async def set_sisa_override(payload: SisaOverrideUpdate, user: dict = Depends(auth.require_koordinator)):
     """Manual adjustment (override) of Sisa Stok. Pass null to clear and revert to auto."""
     if payload.month < 1 or payload.month > 12:
         raise HTTPException(400, 'Bulan tidak valid')
@@ -311,7 +332,7 @@ class AutoSaldoBody(BaseModel):
 
 
 @api.post('/monitoring/auto-saldo-awal')
-async def auto_saldo_awal(payload: AutoSaldoBody):
+async def auto_saldo_awal(payload: AutoSaldoBody, user: dict = Depends(auth.require_koordinator)):
     """Isi Saldo Awal bulan ini otomatis = Sisa Stok bulan sebelumnya (per reagen)."""
     year, month = payload.year, payload.month
     if month < 1 or month > 12:
@@ -330,7 +351,7 @@ async def auto_saldo_awal(payload: AutoSaldoBody):
 
 
 @api.post('/monitoring/periode-baru')
-async def buat_periode_baru(payload: AutoSaldoBody):
+async def buat_periode_baru(payload: AutoSaldoBody, user: dict = Depends(auth.require_koordinator)):
     """Buat periode bulan berikutnya; Saldo Awal = Sisa Stok bulan ini (per reagen).
 
     Desember -> Januari tahun berikutnya (tahun baru otomatis).
@@ -353,7 +374,7 @@ async def buat_periode_baru(payload: AutoSaldoBody):
 
 
 @api.get('/monitoring/periode-info')
-async def periode_info(year: int, month: int):
+async def periode_info(year: int, month: int, user: dict = Depends(auth.get_current_user)):
     """Info sebelum hapus periode: jumlah stock_period, data LIS, PRF & penerimaan."""
     period = f'{year}-{month:02d}'
     return {
@@ -367,7 +388,7 @@ async def periode_info(year: int, month: int):
 
 
 @api.delete('/monitoring/periode')
-async def hapus_periode(year: int, month: int, hapus_lis: bool = False):
+async def hapus_periode(year: int, month: int, hapus_lis: bool = False, user: dict = Depends(auth.require_koordinator)):
     """Hapus periode (saldo awal / QC / override per reagen). Opsional ikut hapus data LIS bulan itu."""
     if month < 1 or month > 12:
         raise HTTPException(400, 'Bulan tidak valid')
@@ -382,7 +403,7 @@ async def hapus_periode(year: int, month: int, hapus_lis: bool = False):
 
 
 @api.get('/monitoring/export')
-async def export_monitoring(year: int, month: int):
+async def export_monitoring(year: int, month: int, user: dict = Depends(auth.get_current_user)):
     """Ekspor tabel Pemantauan Stok ke Excel (.xlsx) dengan kolom harian & warna status."""
     if month < 1 or month > 12:
         raise HTTPException(400, 'Bulan tidak valid')
@@ -397,7 +418,7 @@ async def export_monitoring(year: int, month: int):
 
 # ---------- Notifikasi WhatsApp ----------
 @api.get('/notifikasi/whatsapp/preview')
-async def wa_preview(year: int, month: int):
+async def wa_preview(year: int, month: int, user: dict = Depends(auth.get_current_user)):
     """Pratinjau pesan WhatsApp daftar Kritis & Waspada + status konfigurasi."""
     data = await _compute_monitoring(year, month)
     body, n_crit, n_warn = wa.build_message(data['label'], data['rows'])
@@ -412,7 +433,7 @@ async def wa_preview(year: int, month: int):
 
 
 @api.post('/notifikasi/whatsapp')
-async def wa_send(payload: AutoSaldoBody):
+async def wa_send(payload: AutoSaldoBody, user: dict = Depends(auth.require_koordinator)):
     """Kirim daftar Kritis & Waspada ke WhatsApp via Meta Cloud API."""
     if not wa.is_configured():
         raise HTTPException(400, 'WhatsApp belum dikonfigurasi. Isi WHATSAPP_ACCESS_TOKEN & '
@@ -477,7 +498,7 @@ async def _wa_scheduler_loop():
 
 
 @api.get('/notifikasi/whatsapp/jadwal')
-async def wa_jadwal_info():
+async def wa_jadwal_info(user: dict = Depends(auth.get_current_user)):
     """Info jadwal notifikasi otomatis untuk ditampilkan di UI."""
     now = datetime.now(JAKARTA_TZ)
     tanggal_str = now.strftime('%Y-%m-%d')
@@ -496,7 +517,7 @@ class MappingUpdate(BaseModel):
 
 
 @api.get('/mapping-tests')
-async def mapping_tests(status: Optional[str] = None):
+async def mapping_tests(status: Optional[str] = None, user: dict = Depends(auth.get_current_user)):
     filt = {}
     if status:
         filt['status'] = status
@@ -507,7 +528,7 @@ async def mapping_tests(status: Optional[str] = None):
 
 
 @api.put('/mapping-tests/{mapping_id}')
-async def update_mapping(mapping_id: str, payload: MappingUpdate):
+async def update_mapping(mapping_id: str, payload: MappingUpdate, user: dict = Depends(auth.require_koordinator)):
     updates = {}
     if payload.reagen_name is not None:
         updates['reagen_name'] = payload.reagen_name or None
@@ -543,7 +564,7 @@ class MappingCreate(BaseModel):
 
 
 @api.post('/mapping-tests', status_code=201)
-async def create_mapping(payload: MappingCreate):
+async def create_mapping(payload: MappingCreate, user: dict = Depends(auth.require_koordinator)):
     """Tambah pemetaan baru: Nama Test (LIS) -> Nama Reagen Monitoring.
 
     - lis_name wajib & unik (case-insensitive).
@@ -580,7 +601,7 @@ async def create_mapping(payload: MappingCreate):
 
 
 @api.delete('/mapping-tests/{mapping_id}')
-async def delete_mapping(mapping_id: str):
+async def delete_mapping(mapping_id: str, user: dict = Depends(auth.require_koordinator)):
     """Hapus satu pemetaan Nama Test (LIS) yang tidak terpakai."""
     doc = await mapping_col.find_one({'id': mapping_id}, {'_id': 0})
     if not doc:
@@ -634,7 +655,7 @@ async def _sync_master_reagen(old_name, new_name):
 
 
 @api.get('/lis/raw')
-async def lis_raw(period: Optional[str] = None, limit: int = 500, skip: int = 0):
+async def lis_raw(period: Optional[str] = None, limit: int = 500, skip: int = 0, user: dict = Depends(auth.get_current_user)):
     filt = {}
     if period:
         filt['period'] = period
@@ -646,7 +667,7 @@ async def lis_raw(period: Optional[str] = None, limit: int = 500, skip: int = 0)
 
 
 @api.post('/lis/import')
-async def lis_import(files: list[UploadFile] = File(...)):
+async def lis_import(files: list[UploadFile] = File(...), user: dict = Depends(auth.require_koordinator)):
     """Import satu atau banyak file Excel LIS (nama file LIS_YYMMDD).
 
     Otomatis mengisi pemakaian harian reagen via Mapping_Test dan
@@ -667,7 +688,7 @@ async def lis_import(files: list[UploadFile] = File(...)):
 
 
 @api.get('/lis/source-files')
-async def lis_source_files(period: Optional[str] = None):
+async def lis_source_files(period: Optional[str] = None, user: dict = Depends(auth.get_current_user)):
     """Daftar source file LIS (untuk pengelolaan/hapus)."""
     filt = {}
     if period:
@@ -684,7 +705,7 @@ async def lis_source_files(period: Optional[str] = None):
 
 
 @api.delete('/lis/source-file/{source_file}')
-async def delete_lis_source_file(source_file: str):
+async def delete_lis_source_file(source_file: str, user: dict = Depends(auth.require_koordinator)):
     """Hapus semua data LIS mentah & pemakaian harian dari satu source file."""
     raw_res = await lis_raw_col.delete_many({'source_file': source_file})
     pem_res = await pemakaian_col.delete_many({'source_file': source_file})
@@ -709,7 +730,7 @@ class PRFReceive(BaseModel):
 
 
 @api.get('/prf')
-async def list_prf(period: Optional[str] = None):
+async def list_prf(period: Optional[str] = None, user: dict = Depends(auth.get_current_user)):
     filt = {}
     if period:
         filt['period'] = period
@@ -720,7 +741,7 @@ async def list_prf(period: Optional[str] = None):
 
 
 @api.post('/prf')
-async def create_prf(payload: PRFCreate):
+async def create_prf(payload: PRFCreate, user: dict = Depends(auth.require_koordinator)):
     import uuid
     reagen = await reagen_col.find_one({'id': payload.reagen_id}, {'_id': 0})
     if not reagen:
@@ -747,7 +768,7 @@ async def create_prf(payload: PRFCreate):
 
 
 @api.post('/prf/{prf_id}/terima')
-async def receive_prf(prf_id: str, payload: PRFReceive):
+async def receive_prf(prf_id: str, payload: PRFReceive, user: dict = Depends(auth.require_koordinator)):
     """Tandai PRF diterima -> otomatis membuat catatan Penerimaan (berkesinambungan)."""
     import uuid
     prf = await prf_col.find_one({'id': prf_id})
@@ -786,7 +807,7 @@ async def receive_prf(prf_id: str, payload: PRFReceive):
 
 
 @api.delete('/prf/{prf_id}')
-async def delete_prf(prf_id: str):
+async def delete_prf(prf_id: str, user: dict = Depends(auth.require_koordinator)):
     prf = await prf_col.find_one({'id': prf_id})
     if not prf:
         raise HTTPException(404, 'PRF tidak ditemukan')
@@ -798,7 +819,7 @@ async def delete_prf(prf_id: str):
 
 
 @api.get('/penerimaan')
-async def list_penerimaan(period: Optional[str] = None):
+async def list_penerimaan(period: Optional[str] = None, user: dict = Depends(auth.get_current_user)):
     filt = {}
     if period:
         filt['period'] = period
@@ -811,7 +832,7 @@ async def list_penerimaan(period: Optional[str] = None):
 
 # ---------- Import log ----------
 @api.get('/import-log')
-async def import_log():
+async def import_log(user: dict = Depends(auth.get_current_user)):
     docs = await import_log_col.find({}, {'_id': 0}).sort('created_at', -1).to_list(100)
     return docs
 
@@ -834,4 +855,5 @@ async def startup():
         logger.info(f'Seed result: {res}')
     except Exception as e:  # pragma: no cover
         logger.exception(f'Seeding failed: {e}')
+    await auth.seed_accounts()
     asyncio.create_task(_wa_scheduler_loop())
