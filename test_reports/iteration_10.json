@@ -1,0 +1,57 @@
+{
+  "summary": "Re-tested Analitik feature end-to-end after 2 refinements (reagen search in filter + comparison-mode Top5/10/20/Custom with popover multi-select). Backend: 15/15 pytest tests pass including new comparison_limit and comparison_reagen_ids cases. Frontend: verified sidebar order & role visibility, reagen search filters dropdown, custom date prefill (2026-08-05 to 2026-09-03), Top5=5 bars, Top20=20 bars, Custom mode empty prompt, popover checkbox multi-select updates button label to 'N reagen dipilih', bar chart re-renders with exactly selected reagens (including fill-zero for reagens with no usage), popover search filter works, comparison chart is independent from top reagen selector, dark mode legibility verified.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_analitik.py",
+    "/app/test_reports/pytest/analitik.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Backend correctly excludes _id via projection and uses async aggregation for both trend and comparison.",
+    "Custom-mode comparison correctly fills 0 for reagen_ids with no usage in range and honors sort desc, and ignores comparison_limit as expected.",
+    "Invalid comparison_limit (e.g. 7) silently falls back to 10 - could optionally return 422; current behavior matches spec ('falls back to 10 if invalid')."
+  ],
+  "updated_files": ["/app/backend/tests/test_analitik.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "kalgen/kalgen (petugas), raihan/rakhasivi123 (koordinator)",
+  "seed_data_creation": "None; used existing seeded pemakaian_harian data (Aug-Sep 2026).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Analitik feature fully verified after refinements. Sidebar order confirmed for both roles (petugas: 8 items, koordinator: 10 items with pengguna+pengaturan). Comparison bar chart intentionally independent from Reagen selector. Custom-mode fill-zero works. Backend tests in /app/backend/tests/test_analitik.py (15 tests, all pass in ~5s).",
+  "detailed_results": {
+    "backend": {
+      "auth_required_401": "PASS",
+      "petugas_access": "PASS",
+      "koordinator_access": "PASS",
+      "start_gt_end_400": "PASS",
+      "missing_params_422": "PASS",
+      "empty_range": "PASS",
+      "reagen_id_filter_trend_only": "PASS",
+      "trend_sorted_asc": "PASS",
+      "comparison_sorted_desc": "PASS",
+      "comparison_limit_5_10_20": "PASS (parametrize) - Top5 returns exactly 5",
+      "invalid_limit_fallback_to_10": "PASS",
+      "custom_reagen_ids_exact_selection": "PASS - fake id returns jumlah=0, real+fake sorted desc, koord also 200",
+      "custom_overrides_limit": "PASS - 3 selected returns 3 rows even with comparison_limit=5"
+    },
+    "frontend": {
+      "sidebar_petugas_order": "PASS [dashboard, analitik, pemantauan, master-reagen, data-lis, prf, penerimaan, analisis-excel]",
+      "sidebar_koordinator_order": "PASS - same + pengguna, pengaturan appended",
+      "analitik_position_below_dashboard": "PASS (index 1)",
+      "reagen_search_filters_dropdown": "PASS - 'Hema' -> ['Semua Reagen','Hematologi']; clear -> 97 items (96 reagens + Semua)",
+      "custom_date_prefill": "PASS - 2026-08-05 to 2026-09-03 (30 days)",
+      "comparison_mode_top5_bars": "PASS - 5 bars",
+      "comparison_mode_top20_bars": "PASS - 20 bars",
+      "custom_empty_prompt": "PASS - analitik-comparison-custom-empty visible before selection",
+      "custom_button_label_initial": "PASS - 'Pilih Reagen'",
+      "custom_popover_opens": "PASS - 96 checkbox options",
+      "custom_popover_search": "PASS - 'Hema' -> ['Hematologi']",
+      "custom_button_label_after_3": "PASS - '3 reagen dipilih'",
+      "custom_bar_chart_reflects_selection": "PASS - exactly 3 bars",
+      "comparison_independent_of_reagen_selector": "PASS - selecting a reagen in top filter keeps custom-selected 3 bars unchanged",
+      "koordinator_analitik_access": "PASS",
+      "dark_mode_readability": "PASS - popover, checkboxes, chart axis/grid all legible in dark theme"
+    }
+  }
+}

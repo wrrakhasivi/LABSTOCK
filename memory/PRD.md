@@ -104,6 +104,14 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   saat belum ada preferensi tersimpan. Tested: testing_agent iteration_8 – backend 17/17 pytest, frontend
   100% PASS.
 
+- **(2026-09-03) Tab Analitik**: Halaman baru `/analitik` (posisi tepat di bawah Dashboard, semua role bisa
+  akses). `GET /api/analitik/pemakaian?start=&end=&reagen_id=&comparison_limit=&comparison_reagen_ids=`
+  (agregasi MongoDB atas `pemakaian_harian`). Fitur: filter Reagen (dropdown + search box), Rentang Waktu
+  (Mingguan 7 hari / Bulanan 30 hari / Custom Tanggal), grafik garis tren pemakaian (per reagen atau agregat
+  semua), grafik batang perbandingan antar reagen dengan mode Top 5/10/20 atau Custom (popover multi-select
+  checkbox + search, termasuk isi 0 utk reagen tanpa pemakaian di rentang itu). Grafik batang independen dari
+  pilihan Reagen di filter atas. Tested: testing_agent iteration_10 – backend 15/15 pytest, frontend 100% PASS.
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.

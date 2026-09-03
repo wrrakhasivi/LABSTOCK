@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Table2, FlaskConical, Database, FileText, PackageCheck,
-  BookOpen, Menu, X, RefreshCw, Activity, LogOut, ShieldCheck, Eye, Users, Settings,
+  BookOpen, Menu, X, RefreshCw, Activity, LogOut, ShieldCheck, Eye, Users, Settings, LineChart,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -15,6 +15,7 @@ import { MONTHS_ID } from '../lib/api';
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, slug: 'dashboard', end: true },
+  { to: '/analitik', label: 'Analitik', icon: LineChart, slug: 'analitik' },
   { to: '/pemantauan', label: 'Pemantauan Stok', icon: Table2, slug: 'pemantauan' },
   { to: '/master-reagen', label: 'Master Reagen', icon: FlaskConical, slug: 'master-reagen' },
   { to: '/data-lis', label: 'Data LIS', icon: Database, slug: 'data-lis' },
@@ -27,6 +28,7 @@ const NAV = [
 
 const PAGE_TITLES = {
   '/': 'Dashboard',
+  '/analitik': 'Analitik',
   '/pemantauan': 'Pemantauan Stok',
   '/master-reagen': 'Master Reagen',
   '/data-lis': 'Data LIS',

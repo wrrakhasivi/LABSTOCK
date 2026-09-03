@@ -16,6 +16,7 @@ import Penerimaan from './pages/Penerimaan';
 import AnalisisExcel from './pages/AnalisisExcel';
 import Pengguna from './pages/Pengguna';
 import Pengaturan from './pages/Pengaturan';
+import Analitik from './pages/Analitik';
 
 function AuthedApp() {
   return (
@@ -23,6 +24,7 @@ function AuthedApp() {
       <AppShell>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/analitik" element={<Analitik />} />
           <Route path="/pemantauan" element={<PemantauanStok />} />
           <Route path="/master-reagen" element={<MasterReagen />} />
           <Route path="/data-lis" element={<DataLIS />} />

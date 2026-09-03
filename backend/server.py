@@ -225,6 +225,58 @@ async def update_settings(payload: SettingsUpdate, user: dict = Depends(auth.req
     return {'ok': True, 'lis_retention_days': payload.lis_retention_days}
 
 
+# ---------- Analitik: tren & perbandingan pemakaian reagen ----------
+@api.get('/analitik/pemakaian')
+async def analitik_pemakaian(start: str, end: str, reagen_id: Optional[str] = None,
+                             comparison_limit: int = 10, comparison_reagen_ids: Optional[str] = None,
+                             user: dict = Depends(auth.get_current_user)):
+    """Tren pemakaian harian (reagen tertentu atau total semua) + perbandingan antar reagen.
+
+    Perbandingan bisa Top-N (comparison_limit=5/10/20) atau custom (comparison_reagen_ids=id1,id2,...).
+    """
+    if start > end:
+        raise HTTPException(400, 'Tanggal mulai harus sebelum atau sama dengan tanggal akhir')
+
+    trend_match = {'date': {'$gte': start, '$lte': end}}
+    if reagen_id:
+        trend_match['reagen_id'] = reagen_id
+    trend_cursor = pemakaian_col.aggregate([
+        {'$match': trend_match},
+        {'$group': {'_id': '$date', 'jumlah': {'$sum': '$jumlah'}}},
+        {'$sort': {'_id': 1}},
+    ])
+    trend = [{'date': d['_id'], 'jumlah': d['jumlah']} async for d in trend_cursor]
+
+    custom_ids = [i for i in (comparison_reagen_ids or '').split(',') if i]
+    if custom_ids:
+        comp_cursor = pemakaian_col.aggregate([
+            {'$match': {'date': {'$gte': start, '$lte': end}, 'reagen_id': {'$in': custom_ids}}},
+            {'$group': {'_id': '$reagen_id', 'jumlah': {'$sum': '$jumlah'}}},
+        ])
+        found = {row['_id']: row['jumlah'] async for row in comp_cursor}
+        reagens = await reagen_col.find({'id': {'$in': custom_ids}}, {'_id': 0, 'id': 1, 'nama_reagen': 1}).to_list(200)
+        name_map = {r['id']: r['nama_reagen'] for r in reagens}
+        comparison = sorted(
+            [{'reagen_id': rid, 'nama_reagen': name_map.get(rid, rid), 'jumlah': found.get(rid, 0)} for rid in custom_ids],
+            key=lambda x: -x['jumlah'])
+    else:
+        limit = comparison_limit if comparison_limit in (5, 10, 20) else 10
+        comp_cursor = pemakaian_col.aggregate([
+            {'$match': {'date': {'$gte': start, '$lte': end}}},
+            {'$group': {'_id': '$reagen_id', 'jumlah': {'$sum': '$jumlah'}}},
+            {'$sort': {'jumlah': -1}},
+            {'$limit': limit},
+        ])
+        comp_rows = [row async for row in comp_cursor]
+        ids = [r['_id'] for r in comp_rows]
+        reagens = await reagen_col.find({'id': {'$in': ids}}, {'_id': 0, 'id': 1, 'nama_reagen': 1}).to_list(200)
+        name_map = {r['id']: r['nama_reagen'] for r in reagens}
+        comparison = [{'reagen_id': r['_id'], 'nama_reagen': name_map.get(r['_id'], r['_id']), 'jumlah': r['jumlah']}
+                      for r in comp_rows]
+
+    return {'start': start, 'end': end, 'trend': trend, 'comparison': comparison}
+
+
 @api.get('/meta/excel-summary')
 async def excel_summary(user: dict = Depends(auth.get_current_user)):
     return EXCEL_SUMMARY
