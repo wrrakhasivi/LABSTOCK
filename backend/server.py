@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File
+from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict
 from starlette.middleware.cors import CORSMiddleware
 
@@ -18,6 +19,8 @@ from calculations import build_row, days_in_month, STATUS_LABEL
 from excel_analysis import EXCEL_SUMMARY
 from seeder import run_seed, is_seeded
 from lis_import import import_files as lis_import_files
+from export_excel import build_workbook
+import whatsapp as wa
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -344,6 +347,84 @@ async def buat_periode_baru(payload: AutoSaldoBody):
             'label': f'{MONTH_NAMES_ID[next_month]} {next_year}',
             'reagen': created, 'already_existed': existed > 0,
             'from_period': f'{MONTH_NAMES_ID[month]} {year}'}
+
+
+@api.get('/monitoring/periode-info')
+async def periode_info(year: int, month: int):
+    """Info sebelum hapus periode: jumlah stock_period, data LIS, PRF & penerimaan."""
+    period = f'{year}-{month:02d}'
+    return {
+        'label': f'{MONTH_NAMES_ID[month]} {year}',
+        'stock_period': await stock_period_col.count_documents({'year': year, 'month': month}),
+        'lis_raw': await lis_raw_col.count_documents({'period': period}),
+        'pemakaian': await pemakaian_col.count_documents({'date': {'$regex': f'^{period}'}}),
+        'prf': await prf_col.count_documents({'period': period}),
+        'penerimaan': await penerimaan_col.count_documents({'period': period}),
+    }
+
+
+@api.delete('/monitoring/periode')
+async def hapus_periode(year: int, month: int, hapus_lis: bool = False):
+    """Hapus periode (saldo awal / QC / override per reagen). Opsional ikut hapus data LIS bulan itu."""
+    if month < 1 or month > 12:
+        raise HTTPException(400, 'Bulan tidak valid')
+    period = f'{year}-{month:02d}'
+    res = await stock_period_col.delete_many({'year': year, 'month': month})
+    deleted = {'stock_period': res.deleted_count, 'lis_raw': 0, 'pemakaian': 0}
+    if hapus_lis:
+        deleted['lis_raw'] = (await lis_raw_col.delete_many({'period': period})).deleted_count
+        deleted['pemakaian'] = (await pemakaian_col.delete_many(
+            {'date': {'$regex': f'^{period}'}})).deleted_count
+    return {'ok': True, 'label': f'{MONTH_NAMES_ID[month]} {year}', 'deleted': deleted}
+
+
+@api.get('/monitoring/export')
+async def export_monitoring(year: int, month: int):
+    """Ekspor tabel Pemantauan Stok ke Excel (.xlsx) dengan kolom harian & warna status."""
+    if month < 1 or month > 12:
+        raise HTTPException(400, 'Bulan tidak valid')
+    data = await _compute_monitoring(year, month)
+    content = build_workbook(data)
+    fname = f'Pemantauan_Stok_{MONTH_NAMES_ID[month]}_{year}.xlsx'
+    return Response(
+        content=content,
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': f'attachment; filename="{fname}"'})
+
+
+# ---------- Notifikasi WhatsApp ----------
+@api.get('/notifikasi/whatsapp/preview')
+async def wa_preview(year: int, month: int):
+    """Pratinjau pesan WhatsApp daftar Kritis & Waspada + status konfigurasi."""
+    data = await _compute_monitoring(year, month)
+    body, n_crit, n_warn = wa.build_message(data['label'], data['rows'])
+    cfg = wa.config()
+    last = await import_log_col.find_one({'type': 'whatsapp'}, {'_id': 0}, sort=[('created_at', -1)])
+    return {
+        'message': body, 'critical': n_crit, 'warning': n_warn,
+        'configured': wa.is_configured(), 'recipient': cfg['recipient'] or None,
+        'wa_me': wa.wa_me_link(body, cfg['recipient'] or '6285876806380'),
+        'last_sent': last,
+    }
+
+
+@api.post('/notifikasi/whatsapp')
+async def wa_send(payload: AutoSaldoBody):
+    """Kirim daftar Kritis & Waspada ke WhatsApp via Meta Cloud API."""
+    if not wa.is_configured():
+        raise HTTPException(400, 'WhatsApp belum dikonfigurasi. Isi WHATSAPP_ACCESS_TOKEN & '
+                                 'WHATSAPP_PHONE_NUMBER_ID di backend/.env')
+    data = await _compute_monitoring(payload.year, payload.month)
+    body, n_crit, n_warn = wa.build_message(data['label'], data['rows'])
+    ok, info = await wa.send_text(body)
+    await import_log_col.insert_one({
+        'id': str(uuid.uuid4()), 'type': 'whatsapp', 'period': f'{payload.year}-{payload.month:02d}',
+        'recipient': wa.config()['recipient'], 'ok': ok, 'critical': n_crit, 'warning': n_warn,
+        'info': info, 'created_at': datetime.now(timezone.utc).isoformat(),
+    })
+    if not ok:
+        raise HTTPException(502, f'WhatsApp API gagal: {info.get("error")}')
+    return {'ok': True, 'critical': n_crit, 'warning': n_warn, **info}
 
 
 # ---------- Mapping & LIS (read-only in phase 1) ----------

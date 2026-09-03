@@ -5,6 +5,7 @@ import { api, fmtNum } from '../lib/api';
 import { Card } from '../components/ui/card';
 import { Skeleton } from '../components/ui/skeleton';
 import { StatusBadge } from '../components/StatusBadge';
+import { WhatsAppCard } from '../components/WhatsAppCard';
 import {
   FlaskConical, AlertTriangle, AlertCircle, CheckCircle2, HelpCircle,
   Table2, Database, BookOpen, ArrowRight, PackageCheck, FileText,
@@ -73,6 +74,8 @@ export default function Dashboard() {
           );
         })}
       </div>
+
+      <WhatsAppCard year={year} month={month} />
 
       {/* Critical table */}
       <Card className="p-0">

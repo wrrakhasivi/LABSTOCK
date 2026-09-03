@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePeriod } from '../lib/period';
 import { api, fmtNum, MONTHS_ID } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
+import { ExportButton, DeletePeriodButton } from '../components/PeriodActions';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -214,6 +215,8 @@ export default function PemantauanStok() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          <ExportButton year={year} month={month} />
+          <DeletePeriodButton year={year} month={month} label={data?.label || `${month}/${year}`} />
           <Button variant="outline" size="sm" onClick={load} data-testid="pemantauan-reload-button">
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Muat Ulang
           </Button>

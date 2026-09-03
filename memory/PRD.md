@@ -29,9 +29,18 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   berikutnya), saldo_awal = sisa_stock bulan ini. Tombol + dialog konfirmasi di Pemantauan Stok, otomatis pindah
   ke periode baru (PeriodContext.refreshPeriods).
 
+- Notifikasi WhatsApp (Meta Cloud API, `backend/whatsapp.py`): `GET /api/notifikasi/whatsapp/preview`,
+  `POST /api/notifikasi/whatsapp`. Kartu di Dashboard: Kirim via API (aktif bila env terisi), tombol wa.me fallback,
+  pratinjau pesan. ENV: WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_API_VERSION,
+  WHATSAPP_RECIPIENT_NUMBER=+6285876806380. **Token & Phone Number ID BELUM DIISI oleh user.** Fallback template
+  hello_world bila teks ditolak (di luar jendela 24 jam). Log kirim di import_log (type 'whatsapp').
+- Ekspor Excel (`backend/export_excel.py`, `GET /api/monitoring/export`): kolom harian 1-31, warna status per baris.
+- Hapus Periode: `GET /api/monitoring/periode-info`, `DELETE /api/monitoring/periode?hapus_lis=` + dialog konfirmasi
+  (komponen `frontend/src/components/PeriodActions.js`).
+
 ## Backlog
-- P1: Halaman Notifikasi/Dashboard (daftar reagen Kritis & Waspada saat aplikasi dibuka).
-- P2: Login & Peran (Petugas vs Koordinator).
+- P1: Isi kredensial Meta WhatsApp di backend/.env lalu uji kirim nyata; opsional jadwal kirim harian.
+- P2: Login & Peran (Petugas vs Koordinator) – batasi Hapus Periode untuk Koordinator.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.
 
 ## Catatan
