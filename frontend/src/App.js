@@ -15,6 +15,7 @@ import PRF from './pages/PRF';
 import Penerimaan from './pages/Penerimaan';
 import AnalisisExcel from './pages/AnalisisExcel';
 import Pengguna from './pages/Pengguna';
+import Pengaturan from './pages/Pengaturan';
 
 function AuthedApp() {
   return (
@@ -29,6 +30,7 @@ function AuthedApp() {
           <Route path="/penerimaan" element={<Penerimaan />} />
           <Route path="/analisis-excel" element={<AnalisisExcel />} />
           <Route path="/pengguna" element={<Pengguna />} />
+          <Route path="/pengaturan" element={<Pengaturan />} />
         </Routes>
       </AppShell>
     </PeriodProvider>

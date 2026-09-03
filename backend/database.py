@@ -21,6 +21,7 @@ mapping_col = db['mapping_test']
 lis_raw_col = db['lis_raw']
 import_log_col = db['import_log']
 users_col = db['users']
+settings_col = db['settings']
 
 
 async def ensure_indexes():

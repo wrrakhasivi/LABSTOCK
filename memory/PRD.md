@@ -94,6 +94,16 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   (gradient gelap di dark mode), badge "Perlu Cek", pill role Petugas/Koordinator, input edit Saldo Awal/QC.
   Tested: testing_agent iteration_7 – frontend 100% PASS, tidak ada regresi mode terang.
 
+- **(2026-09-03) Auto-Hapus File Mentah Excel LIS**: File Excel LIS TIDAK pernah disimpan di disk (hanya
+  diparse in-memory), jadi fitur ini menghapus baris arsip `lis_raw` (bukan `pemakaian_harian`/`stock_period`
+  yang sudah terintegrasi ke Pemantauan Stok) setelah periode retensi sejak `uploaded_at`. Halaman baru
+  `/pengaturan` (koordinator-only, `Pengaturan.js`) dengan pilihan 3/7/30 hari (`GET/PUT /api/settings`,
+  `settings_col`). Backend: `_backfill_lis_raw_uploaded_at()` sekali saat startup (data lama tidak langsung
+  terhapus), `_lis_retention_loop()` bersihkan setiap 1 jam, log ke `import_log` (type=`lis_cleanup`).
+  **Tema default Light**: `lib/theme.js` tidak lagi ikuti `prefers-color-scheme` OS — default selalu Light
+  saat belum ada preferensi tersimpan. Tested: testing_agent iteration_8 – backend 17/17 pytest, frontend
+  100% PASS.
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.

@@ -4,7 +4,7 @@ import re
 import uuid
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 from typing import Optional
 
@@ -15,7 +15,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from database import (
     reagen_col, stock_period_col, pemakaian_col, penerimaan_col,
-    prf_col, mapping_col, lis_raw_col, import_log_col, users_col,
+    prf_col, mapping_col, lis_raw_col, import_log_col, users_col, settings_col,
 )
 from calculations import build_row, days_in_month, STATUS_LABEL
 from excel_analysis import EXCEL_SUMMARY
@@ -38,6 +38,9 @@ MONTH_NAMES_ID = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
 
 MAX_LIS_FILES = 50
 MAX_LIS_FILE_SIZE = 10 * 1024 * 1024  # 10MB per file
+
+ALLOWED_RETENTION_DAYS = (3, 7, 30)
+DEFAULT_RETENTION_DAYS = 7
 
 
 # ---------- Models ----------
@@ -187,6 +190,39 @@ async def delete_user(username: str, user: dict = Depends(auth.require_koordinat
             raise HTTPException(400, 'Tidak dapat menghapus satu-satunya akun Koordinator')
     await users_col.delete_one({'username': username})
     return {'ok': True}
+
+
+# ---------- Pengaturan (Retensi File Excel LIS) ----------
+async def _get_retention_days() -> int:
+    doc = await settings_col.find_one({'key': 'lis_retention_days'})
+    return doc['value'] if doc else DEFAULT_RETENTION_DAYS
+
+
+class SettingsUpdate(BaseModel):
+    lis_retention_days: int
+
+
+@api.get('/settings')
+async def get_settings(user: dict = Depends(auth.get_current_user)):
+    last_cleanup = await import_log_col.find_one(
+        {'type': 'lis_cleanup'}, {'_id': 0}, sort=[('created_at', -1)])
+    return {
+        'lis_retention_days': await _get_retention_days(),
+        'allowed_retention_days': ALLOWED_RETENTION_DAYS,
+        'last_cleanup': last_cleanup,
+    }
+
+
+@api.put('/settings')
+async def update_settings(payload: SettingsUpdate, user: dict = Depends(auth.require_koordinator)):
+    """Koordinator mengatur periode retensi file mentah Excel LIS (hari)."""
+    if payload.lis_retention_days not in ALLOWED_RETENTION_DAYS:
+        raise HTTPException(400, f'Periode retensi harus salah satu dari {ALLOWED_RETENTION_DAYS} hari')
+    await settings_col.update_one(
+        {'key': 'lis_retention_days'},
+        {'$set': {'key': 'lis_retention_days', 'value': payload.lis_retention_days}},
+        upsert=True)
+    return {'ok': True, 'lis_retention_days': payload.lis_retention_days}
 
 
 @api.get('/meta/excel-summary')
@@ -578,6 +614,37 @@ async def _wa_scheduler_loop():
         await asyncio.sleep(60)
 
 
+# ---------- Auto-delete file mentah Excel LIS (Data LIS Mentah) ----------
+async def _backfill_lis_raw_uploaded_at():
+    """Beri timestamp 'uploaded_at' = sekarang ke data lama yang belum punya (agar tidak langsung terhapus)."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await lis_raw_col.update_many({'uploaded_at': {'$exists': False}}, {'$set': {'uploaded_at': now_iso}})
+
+
+async def _run_lis_retention_cleanup():
+    """Hapus baris lis_raw yang lebih tua dari periode retensi. Tidak menyentuh pemakaian_harian/stock_period."""
+    retention_days = await _get_retention_days()
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=retention_days)).isoformat()
+    res = await lis_raw_col.delete_many({'uploaded_at': {'$lt': cutoff}})
+    await import_log_col.insert_one({
+        'id': str(uuid.uuid4()), 'type': 'lis_cleanup', 'retention_days': retention_days,
+        'deleted': res.deleted_count, 'created_at': datetime.now(timezone.utc).isoformat(),
+    })
+    if res.deleted_count:
+        logger.info(f'Auto-delete file mentah LIS: {res.deleted_count} baris (retensi {retention_days} hari)')
+    return res.deleted_count
+
+
+async def _lis_retention_loop():
+    """Jalankan pembersihan retensi setiap 1 jam."""
+    while True:
+        try:
+            await _run_lis_retention_cleanup()
+        except Exception as e:  # pragma: no cover
+            logger.exception(f'Gagal menjalankan auto-delete file mentah LIS: {e}')
+        await asyncio.sleep(3600)
+
+
 @api.get('/notifikasi/whatsapp/jadwal')
 async def wa_jadwal_info(user: dict = Depends(auth.get_current_user)):
     """Info jadwal notifikasi otomatis untuk ditampilkan di UI."""
@@ -941,4 +1008,6 @@ async def startup():
     except Exception as e:  # pragma: no cover
         logger.exception(f'Seeding failed: {e}')
     await auth.seed_accounts()
+    await _backfill_lis_raw_uploaded_at()
     asyncio.create_task(_wa_scheduler_loop())
+    asyncio.create_task(_lis_retention_loop())

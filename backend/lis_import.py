@@ -292,6 +292,7 @@ async def import_files(files, reagen_col, mapping_col, pemakaian_col, lis_raw_co
 
         # build lis_raw rows for this file
         period = f'{year}-{month:02d}' if (year and month) else (sorted(all_dates)[0][:7] if all_dates else None)
+        uploaded_at = datetime.now(timezone.utc).isoformat()
         for test, days in file_test_days.items():
             lis_raw_new.append({
                 'id': str(uuid.uuid4()),
@@ -301,6 +302,7 @@ async def import_files(files, reagen_col, mapping_col, pemakaian_col, lis_raw_co
                 'total': sum(days.values()),
                 'source_file': stem,
                 'days': days,
+                'uploaded_at': uploaded_at,
             })
 
         file_reports.append({

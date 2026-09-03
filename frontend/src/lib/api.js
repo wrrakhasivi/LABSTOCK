@@ -35,6 +35,8 @@ export const api = {
   listUsers: () => client.get('/users').then((r) => r.data),
   createUser: (body) => client.post('/users', body).then((r) => r.data),
   deleteUser: (username) => client.delete(`/users/${encodeURIComponent(username)}`).then((r) => r.data),
+  getSettings: () => client.get('/settings').then((r) => r.data),
+  updateSettings: (body) => client.put('/settings', body).then((r) => r.data),
   health: () => client.get('/health').then((r) => r.data),
   excelSummary: () => client.get('/meta/excel-summary').then((r) => r.data),
   periods: () => client.get('/meta/periods').then((r) => r.data),

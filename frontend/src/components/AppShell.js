@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Table2, FlaskConical, Database, FileText, PackageCheck,
-  BookOpen, Menu, X, RefreshCw, Activity, LogOut, ShieldCheck, Eye, Users,
+  BookOpen, Menu, X, RefreshCw, Activity, LogOut, ShieldCheck, Eye, Users, Settings,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -22,6 +22,7 @@ const NAV = [
   { to: '/penerimaan', label: 'Penerimaan', icon: PackageCheck, slug: 'penerimaan' },
   { to: '/analisis-excel', label: 'Analisis Struktur Excel', icon: BookOpen, slug: 'analisis-excel' },
   { to: '/pengguna', label: 'Kelola Pengguna', icon: Users, slug: 'pengguna', koordinatorOnly: true },
+  { to: '/pengaturan', label: 'Pengaturan', icon: Settings, slug: 'pengaturan', koordinatorOnly: true },
 ];
 
 const PAGE_TITLES = {
@@ -33,6 +34,7 @@ const PAGE_TITLES = {
   '/penerimaan': 'Penerimaan Barang',
   '/analisis-excel': 'Analisis Struktur Excel',
   '/pengguna': 'Kelola Pengguna',
+  '/pengaturan': 'Pengaturan',
 };
 
 const SidebarContent = ({ onNavigate }) => {
