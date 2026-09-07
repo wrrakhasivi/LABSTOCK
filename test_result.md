@@ -189,7 +189,7 @@ backend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 8
+  test_sequence: 9
   run_ui: false
 
 test_plan:
@@ -256,6 +256,10 @@ agent_communication:
     -agent: "testing"
     -message: "WHATSAPP NOTIFICATION TESTING COMPLETE (Test Sequence 8). All 4 test scenarios PASSED✓. Backend implementation is working correctly. SUMMARY: (1) GET /api/notifikasi/whatsapp/preview: Returns 200 with all required fields (configured=true, recipient='6285876806380', message with 'KRITIS' and 'WASPADA', critical=12, warning=15)✓. (2) POST /api/notifikasi/whatsapp: Backend correctly calls Meta WhatsApp Cloud API and receives expected error '#131030 Recipient phone number not in allowed list'✓. This is EXTERNAL BLOCKER from Meta (Test Number +1 555-197-3123 can only send to numbers in allowed list), NOT a code bug✓. Error is properly logged to import_log collection with ok=false✓. (3) GET preview after POST: last_sent field updated with new log entry showing ok=false and error details✓. (4) Token security: WHATSAPP_ACCESS_TOKEN does NOT leak in any API response✓. NOTE: POST returns 502 which gets intercepted by Cloudflare HTML error page, but this doesn't affect functionality - error details are preserved in import_log and accessible via preview endpoint's last_sent field. The #131030 error is expected and correct behavior given Meta's restrictions. Feature ready for production (will work when user adds recipient to Meta's allowed list)."
 
+    -agent: "user"
+    -message: "SMOKE TEST REQUEST (Test Sequence 9): Fresh service restart verification. Test: 1) Login page loads with correct fields. 2) Login as Koordinator (raihan/rakhasivi123), verify Dashboard with KPI data. 3) Verify sidebar navigation works for all pages. 4) Logout and login as Petugas (kalgen/kalgen), verify view-only access. 5) Check console for errors."
+    -agent: "testing"
+    -message: "SMOKE TEST COMPLETE (Test Sequence 9). ALL TESTS PASSED✓. App is working correctly after fresh service restart. SUMMARY: (1) Login page: Loads correctly with all fields (username, password, submit button)✓. (2) Koordinator login: raihan/rakhasivi123 works, redirects to Dashboard✓. (3) Dashboard KPI data: Shows 98 total reagents (OK-mapped), 0 critical, 0 warning, 0 safe, 98 unknown✓. Data was seeded correctly. (4) Navigation: All 9 pages load successfully (Dashboard, Analitik, Pemantauan Stok, Data LIS, Master Reagen, PRF, Penerimaan, Pengguna, Pengaturan)✓. (5) Logout: Works correctly, redirects to login page✓. (6) Petugas login: kalgen/kalgen works, redirects to Dashboard✓. (7) View-only access: Koordinator-only pages (Pengguna, Pengaturan) are hidden for Petugas✓. No Tambah/Edit/Hapus buttons visible on Master Reagen page✓. (8) Console errors: No critical errors found (only Cloudflare RUM request failure which is not critical)✓. Preview environment is working correctly."
 backend:
   - task: "Notifikasi WhatsApp via Meta Cloud API (kredensial terpasang)"
     implemented: true

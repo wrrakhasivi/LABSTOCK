@@ -119,6 +119,12 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   (ekspor SVG→canvas→PNG client-side, background ikut tema aktif). Tested: testing_agent iteration_11 –
   frontend 100% PASS (backend tidak berubah, iteration_10 tetap valid).
 
+- **(2026-07) Preview Restart**: `backend/.env` dan `frontend/.env` tidak ada di pod (env baru), dibuat ulang
+  (MONGO_URL, DB_NAME=labstock, JWT_SECRET, REACT_APP_BACKEND_URL). Dependencies sudah terpasang di venv/node_modules.
+  Backend auto-reseed data awal saat startup (119 reagen, 200 stock_period, dst). WhatsApp env vars (token/phone_id)
+  belum diisi ulang (fitur WhatsApp API kirim akan nonaktif sampai diisi lagi). Tested: auto_frontend_testing_agent
+  smoke test – login Koordinator & Petugas, semua 9 halaman, RBAC, logout, semua PASS.
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.

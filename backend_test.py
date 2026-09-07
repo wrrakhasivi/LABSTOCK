@@ -10,7 +10,7 @@ import requests
 from pymongo import MongoClient
 
 # Configuration
-BACKEND_URL = "https://stock-status-5.preview.emergentagent.com/api"
+BACKEND_URL = "https://lets-preview-4.preview.emergentagent.com/api"
 MONGO_URL = "mongodb://localhost:27017"
 DB_NAME = "labstock"
 SEED_FILE = "/app/backend/seed/seed_data.json"
