@@ -114,6 +114,8 @@ async def persist_new_reagen(doc):
                 'avg_2023': doc.get('avg_2023'),
                 'buffer_stock': doc.get('buffer_stock'),
                 'satuan': doc.get('satuan') or 'Pcs',
+                'derived_from_reagen_name': doc.get('derived_from_reagen_name'),
+                'derived_multiplier': doc.get('derived_multiplier'),
             }
             for i, r in enumerate(extra):
                 if _norm(r.get('nama_reagen')) == key:

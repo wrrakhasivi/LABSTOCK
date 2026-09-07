@@ -140,6 +140,21 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   "sudah di input" manual). Tested: auto_frontend_testing_agent — semua halaman render data migrasi dgn benar,
   tidak ada console error.
 
+- **(2026-09-07) Reagen Turunan "Kit Elisa Quantiferon" (formula x4 dari Quantiferon Tube)**: Reagen ini
+  TIDAK mengambil data dari LIS Excel — kolom harian 1-31 default = nilai harian "Quantiferon Tube" x 4
+  (`derived_from_reagen_name` + `derived_multiplier` di master_reagen, dihitung di `_compute_monitoring`
+  server.py setelah daily_by_reagen dari LIS terbentuk). User (Koordinator) bisa klik tiap sel harian utk
+  override manual per tanggal — tersimpan di `stock_period.hari_override` (dict {hari: nilai}, endpoint baru
+  `PUT /api/monitoring/hari`, body {reagen_id,year,month,day,value}; value=null hapus override & kembali ke
+  formula). Frontend: `EditableDay` (PemantauanStok.js) — klik sel jadi input, tersimpan via
+  `api.setHariOverride`, sel yang sudah diedit manual ditandai bold+amber. Total Pakai/Sisa Stok/Buffer/Status
+  tetap dihitung sama seperti reagen lain (build_row tidak berubah, hanya daily_map yg sudah final dioper).
+  Master Reagen "Kit Elisa Quantiferon" (satuan Test) & Pemetaan Test ("Kit Elisa Quantiferon (Formula: 4x
+  Quantiferon Tube)" -> status OK) sudah ada di DB & dipersist ke seed_data.json Master_Extra (reseed-safe;
+  seeder.py & seed_store.py diperluas utk propagate derived_from_reagen_name/derived_multiplier). Tested:
+  auto_frontend_testing_agent — formula default, edit manual, persist setelah reload, clear override kembali
+  ke formula, semua PASS; reagen lain tetap read-only di kolom harian (tidak ada regresi).
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.

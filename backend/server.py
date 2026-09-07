@@ -377,6 +377,30 @@ async def _compute_monitoring(year: int, month: int):
                 continue
             dd[day] = dd.get(day, 0) + (jumlah or 0)
 
+    # Reagen turunan (hari 1-31 dihitung dari reagen lain x pengali, bukan dari LIS).
+    # Contoh: Kit Elisa Quantiferon = Quantiferon Tube x 4 (default), bisa ditimpa manual per hari.
+    ndays = days_in_month(year, month)
+    derived_ids = set()
+    hari_override_by_reagen = {}
+    for r in reagens:
+        dfn = (r.get('derived_from_reagen_name') or '').strip()
+        if not dfn:
+            continue
+        rid = r['id']
+        derived_ids.add(rid)
+        src_id = name_to_id.get(dfn.lower())
+        source_daily = daily_by_reagen.get(src_id, {}) if src_id else {}
+        mult = r.get('derived_multiplier') or 1
+        overrides = dict((period_by_reagen.get(rid) or {}).get('hari_override') or {})
+        hari_override_by_reagen[rid] = overrides
+        computed = {}
+        for d in range(1, ndays + 1):
+            if str(d) in overrides:
+                computed[d] = overrides[str(d)]
+            else:
+                computed[d] = (source_daily.get(d, 0) or 0) * mult
+        daily_by_reagen[rid] = computed
+
     period_str = f'{year}-{month:02d}'
     pen_docs = await penerimaan_col.find({'period': period_str}, {'_id': 0}).to_list(5000)
     pen_by_reagen = {}
@@ -401,6 +425,8 @@ async def _compute_monitoring(year: int, month: int):
             prf_by_reagen.get(rid, []),
             pen_by_reagen.get(rid, []),
             year, month,
+            is_derived=rid in derived_ids,
+            hari_override=hari_override_by_reagen.get(rid, {}),
         )
         rows.append(row)
 
@@ -493,6 +519,49 @@ async def set_sisa_override(payload: SisaOverrideUpdate, user: dict = Depends(au
     await _upsert_period_field(payload.reagen_id, payload.year, payload.month,
                                'sisa_override', payload.sisa_override)
     return {'ok': True}
+
+
+class HariOverrideUpdate(BaseModel):
+    reagen_id: str
+    year: int
+    month: int
+    day: int
+    value: Optional[float] = None
+
+
+@api.put('/monitoring/hari')
+async def set_hari_override(payload: HariOverrideUpdate, user: dict = Depends(auth.require_koordinator)):
+    """Input manual nilai harian (kolom 1-31) untuk reagen turunan (mis. Kit Elisa Quantiferon).
+
+    Hanya berlaku untuk reagen dengan `derived_from_reagen_name` terisi (nilai default = formula
+    reagen sumber x pengali). value=null menghapus override (kembali ke nilai formula otomatis).
+    """
+    if payload.month < 1 or payload.month > 12:
+        raise HTTPException(400, 'Bulan tidak valid')
+    ndays = days_in_month(payload.year, payload.month)
+    if payload.day < 1 or payload.day > ndays:
+        raise HTTPException(400, 'Tanggal tidak valid')
+    existing = await stock_period_col.find_one(
+        {'reagen_id': payload.reagen_id, 'year': payload.year, 'month': payload.month})
+    overrides = dict((existing or {}).get('hari_override') or {})
+    if payload.value is None:
+        overrides.pop(str(payload.day), None)
+    else:
+        overrides[str(payload.day)] = payload.value
+    if existing:
+        await stock_period_col.update_one(
+            {'reagen_id': payload.reagen_id, 'year': payload.year, 'month': payload.month},
+            {'$set': {'hari_override': overrides}})
+    else:
+        doc = {
+            'id': str(uuid.uuid4()), 'reagen_id': payload.reagen_id,
+            'year': payload.year, 'month': payload.month,
+            'saldo_awal': None, 'qc': 0, 'buffer_override': None, 'sisa_override': None,
+            'hari_override': overrides,
+            'created_at': datetime.now(timezone.utc).isoformat(),
+        }
+        await stock_period_col.insert_one(doc)
+    return {'ok': True, 'hari_override': overrides}
 
 
 class AutoSaldoBody(BaseModel):

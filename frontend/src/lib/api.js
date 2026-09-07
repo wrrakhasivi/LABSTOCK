@@ -74,6 +74,7 @@ export const api = {
   deletePrf: (id) => client.delete(`/prf/${id}`).then((r) => r.data),
   penerimaan: (period) => client.get('/penerimaan', { params: { period } }).then((r) => r.data),
   analitikPemakaian: (params) => client.get('/analitik/pemakaian', { params }).then((r) => r.data),
+  setHariOverride: (body) => client.put('/monitoring/hari', body).then((r) => r.data),
 };
 
 export const MONTHS_ID = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];

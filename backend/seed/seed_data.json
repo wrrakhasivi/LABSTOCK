@@ -7064,6 +7064,11 @@
       "lis_name": "Plasma Osmolality",
       "reagen": "Elektrolit",
       "status": "OK"
+    },
+    {
+      "lis_name": "Kit Elisa Quantiferon (Formula: 4x Quantiferon Tube)",
+      "reagen": "Kit Elisa Quantiferon",
+      "status": "OK"
     }
   ],
   "LIS_Juli": [
@@ -19513,6 +19518,17 @@
       "avg_2023": null,
       "buffer_stock": null,
       "satuan": "Pcs"
+    },
+    {
+      "nama_reagen": "Kit Elisa Quantiferon",
+      "item_code": null,
+      "qty_per_kit": 192,
+      "avg_2022": 268,
+      "avg_2023": 256,
+      "buffer_stock": 192,
+      "satuan": "Test",
+      "derived_from_reagen_name": "Quantiferon Tube",
+      "derived_multiplier": 4
     }
   ]
 }

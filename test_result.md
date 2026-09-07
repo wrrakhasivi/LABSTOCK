@@ -279,3 +279,32 @@ backend:
         -working: true
         -agent: "main"
         -comment: "Kode status gagal kirim diubah 502 -> 424 agar detail error tidak ditimpa halaman HTML Cloudflare; ditambah petunjuk cara menambahkan nomor di Meta. Diverifikasi via URL publik: HTTP 424 + detail utuh."
+
+
+frontend:
+  - task: "Kit Elisa Quantiferon - Derived Reagent with Editable Daily Overrides"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PemantauanStok.js, backend/server.py, backend/calculations.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "testing"
+        -comment: "VERIFIED (Test Sequence 11): All 10 test scenarios PASSED✓. Feature working perfectly. (1) Kit Elisa Quantiferon appears in Pemantauan Stok table with Satuan='Test'✓. (2) Daily columns (1-31) correctly computed as Quantiferon Tube × 4: Day 1=0×4=0✓, Day 3=3×4=12✓, Day 5=5×4=20✓, Day 10=1×4=4✓, Day 15=0×4=0✓. (3) Koordinator can click any day cell and it becomes editable input field✓. (4) Manual override (77) saved successfully with success toast✓. (5) Manual override visually marked with bold/amber styling (font-bold text-amber-600)✓. (6) Manual override PERSISTS after page reload (value=77 still present)✓. (7) Bold/amber styling persists after reload✓. (8) Clearing manual override (empty value + Enter) reverts to auto-computed default (12)✓. (9) Bold/amber styling removed after clearing override✓. (10) Computed columns (Total Pakai=180, Sisa Stok=140, Buffer=192, Status=KRITIS) all display correctly✓. No console errors or API errors detected. Backend endpoint PUT /api/monitoring/hari working correctly with hari_override persistence in stock_period collection. Frontend EditableDay component correctly handles isOverridden flag and styling. Feature ready for production."
+
+metadata:
+  test_sequence: 11
+
+test_plan:
+  current_focus: []
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    -agent: "user"
+    -message: "NEW FEATURE TEST REQUEST (Test Sequence 11): Verify 'Kit Elisa Quantiferon' derived reagent feature in Pemantauan Stok. Login as Koordinator (raihan/rakhasivi123), set period to Agustus 2026. Test: (1) Kit Elisa Quantiferon appears with Satuan='Test'. (2) Daily columns auto-computed as Quantiferon Tube × 4. (3) Koordinator can click day cell to manually override. (4) Manual value persists after reload. (5) Clearing override reverts to auto-computed default. (6) Manual edits visually marked (bold/amber). (7) Computed columns (Total Pakai, Sisa Stok, Buffer, Status) display correctly. (8) No console errors."
+    -agent: "testing"
+    -message: "KIT ELISA QUANTIFERON FEATURE TESTING COMPLETE (Test Sequence 11). ALL TESTS PASSED✓. Feature is working perfectly as specified. SUMMARY: Kit Elisa Quantiferon successfully implemented as a derived reagent with editable daily overrides. Daily values correctly computed from Quantiferon Tube × 4 (verified for days 1,3,5,10,15)✓. Koordinator can click any day cell to edit✓. Manual overrides (tested with value 77) save successfully and persist after reload✓. Manual edits visually marked with bold/amber styling✓. Clearing override (empty value) correctly reverts to auto-computed default✓. Bold/amber styling removed after clearing✓. All computed columns (Total Pakai, Sisa Stok, Buffer, Status) display correctly✓. Backend PUT /api/monitoring/hari endpoint working correctly✓. Frontend EditableDay component handles isOverridden flag and styling correctly✓. No console errors or API errors detected✓. Feature ready for production use."

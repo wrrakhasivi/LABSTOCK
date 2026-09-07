@@ -84,6 +84,10 @@ async def run_seed(force=False):
             rec['satuan'] = row['satuan']
         if row.get('item_code'):
             rec['item_code'] = row['item_code']
+        if row.get('derived_from_reagen_name'):
+            rec['derived_from_reagen_name'] = row['derived_from_reagen_name']
+        if row.get('derived_multiplier') is not None:
+            rec['derived_multiplier'] = to_number(row.get('derived_multiplier'))
         master[name] = rec
 
     reagen_docs = []
@@ -99,6 +103,8 @@ async def run_seed(force=False):
             'avg_2023': rec.get('avg_2023'),
             'buffer_stock': rec.get('buffer_stock'),
             'satuan': rec.get('satuan') or 'Pcs',
+            'derived_from_reagen_name': rec.get('derived_from_reagen_name'),
+            'derived_multiplier': rec.get('derived_multiplier'),
             'aktif': True,
             'created_at': datetime.now(timezone.utc).isoformat(),
         })

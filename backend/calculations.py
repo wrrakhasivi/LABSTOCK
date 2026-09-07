@@ -50,7 +50,8 @@ def days_in_month(year, month):
     return calendar.monthrange(year, month)[1]
 
 
-def build_row(reagen, period, daily_map, stok_masuk, prf_list, pen_list, year, month):
+def build_row(reagen, period, daily_map, stok_masuk, prf_list, pen_list, year, month,
+              is_derived=False, hari_override=None):
     """Assemble one monitoring row.
 
     reagen: master_reagen doc
@@ -105,4 +106,6 @@ def build_row(reagen, period, daily_map, stok_masuk, prf_list, pen_list, year, m
         'status_label': STATUS_LABEL[status],
         'prf': prf_list,
         'penerimaan': pen_list,
+        'is_derived': is_derived,
+        'hari_override': hari_override or {},
     }

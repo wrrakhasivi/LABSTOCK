@@ -82,6 +82,61 @@ function EditableNumber({ value, onSave, testid, alignCls = 'text-right', valueC
   );
 }
 
+// Kolom harian editable (untuk reagen turunan seperti Kit Elisa Quantiferon = Quantiferon Tube x4)
+function EditableDay({ value, onSave, testid, editable, isOverridden, isToday, day }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState('');
+  const inputRef = useRef(null);
+
+  const start = () => {
+    if (!editable) return;
+    setVal(value === null || value === undefined ? '' : String(value));
+    setEditing(true);
+  };
+  useEffect(() => { if (editing && inputRef.current) inputRef.current.select(); }, [editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const trimmed = val.trim();
+    const parsed = trimmed === '' ? null : Number(trimmed);
+    if (trimmed !== '' && Number.isNaN(parsed)) { toast.error('Nilai harus angka'); return; }
+    const current = value === null || value === undefined ? null : Number(value);
+    if (parsed === current) return;
+    onSave(parsed);
+  };
+
+  if (editing) {
+    return (
+      <td className={`ls-day-col border-b py-1 ${isToday ? 'ls-today' : ''}`}>
+        <input
+          ref={inputRef}
+          type="number"
+          data-testid={`${testid}-input`}
+          className="num h-6 w-full rounded border border-primary bg-background px-0 text-center text-[11px] outline-none ring-1 ring-ring"
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit();
+            else if (e.key === 'Escape') setEditing(false);
+          }}
+        />
+      </td>
+    );
+  }
+
+  return (
+    <td
+      className={`ls-day-col border-b py-1.5 ${editable ? 'cursor-pointer hover:bg-primary/10' : ''} ${isOverridden ? 'font-bold text-amber-600' : (value ? '' : 'text-muted-foreground/40')} ${isToday ? 'ls-today' : ''}`}
+      data-testid={testid}
+      title={isOverridden ? `Hari ${day}: nilai manual (klik untuk edit)` : `Hari ${day}: default otomatis = Quantiferon Tube × 4 (klik untuk edit manual)`}
+      onClick={start}
+    >
+      {value || ''}
+    </td>
+  );
+}
+
 export default function PemantauanStok() {
   const { isKoordinator } = useAuth();
   const { year, month, setYear, setMonth, refreshPeriods } = usePeriod();
@@ -164,6 +219,14 @@ export default function PemantauanStok() {
       toast.success(`QC "${row.nama_reagen}" diperbarui`);
       load();
     } catch (e) { toast.error('Gagal menyimpan QC'); }
+  };
+
+  const saveHari = async (row, day, value) => {
+    try {
+      await api.setHariOverride({ reagen_id: row.reagen_id, year, month, day, value });
+      toast.success(`Nilai hari ${day} untuk "${row.nama_reagen}" diperbarui`);
+      load();
+    } catch (e) { toast.error('Gagal menyimpan nilai harian'); }
   };
 
   const runAuto = async () => {
@@ -308,6 +371,20 @@ export default function PemantauanStok() {
                       />
                       {dayCols.map((d) => {
                         const v = r.hari?.[String(d)] || 0;
+                        if (r.is_derived) {
+                          return (
+                            <EditableDay
+                              key={d}
+                              value={v}
+                              onSave={(val) => saveHari(r, d, val)}
+                              testid={`hari-${r.reagen_id}-${d}`}
+                              editable={isKoordinator}
+                              isOverridden={Object.prototype.hasOwnProperty.call(r.hari_override || {}, String(d))}
+                              isToday={d === todayCol}
+                              day={d}
+                            />
+                          );
+                        }
                         return (
                           <td key={d} className={`ls-day-col border-b py-1.5 ${v ? '' : 'text-muted-foreground/40'} ${d === todayCol ? 'ls-today' : ''}`}>{v || ''}</td>
                         );
@@ -346,6 +423,7 @@ export default function PemantauanStok() {
             <p className="flex items-center gap-1.5">
               <Pencil className="h-3 w-3" />
               Kolom <b>Saldo Awal</b> & <b>QC</b> dapat diklik untuk input manual. <b>Sisa Stok</b> dihitung otomatis (tidak dapat diubah manual). Tombol <b>Saldo Awal Otomatis</b> mengisi saldo awal dari sisa stok bulan sebelumnya.
+              Reagen turunan (mis. <b>Kit Elisa Quantiferon</b>) — kolom harian 1-31 default otomatis = Quantiferon Tube × 4, dan dapat diklik untuk diedit manual per tanggal (angka <span className="font-bold text-amber-600">tebal kuning</span> = sudah diedit manual).
             </p>
           </div>
         </>
