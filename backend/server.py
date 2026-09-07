@@ -15,7 +15,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from database import (
     reagen_col, stock_period_col, pemakaian_col, penerimaan_col,
-    prf_col, mapping_col, lis_raw_col, import_log_col, users_col,
+    prf_col, mapping_col, lis_raw_col, import_log_col, users_col, periode_meta_col,
 )
 from calculations import build_row, days_in_month, STATUS_LABEL
 from excel_analysis import EXCEL_SUMMARY
@@ -409,6 +409,9 @@ async def _compute_monitoring(year: int, month: int):
     for row in rows:
         counts[row['status']] += 1
 
+    meta = await periode_meta_col.find_one({'year': year, 'month': month}, {'_id': 0})
+    marked_days = sorted((meta or {}).get('marked_days') or [])
+
     return {
         'year': year,
         'month': month,
@@ -417,6 +420,7 @@ async def _compute_monitoring(year: int, month: int):
         'counts': counts,
         'total_reagen': len(rows),
         'rows': rows,
+        'marked_days': marked_days,
     }
 
 
@@ -537,6 +541,41 @@ async def set_hari_override(payload: HariOverrideUpdate, user: dict = Depends(au
         }
         await stock_period_col.insert_one(doc)
     return {'ok': True, 'hari_override': overrides}
+
+
+class TanggalMarkUpdate(BaseModel):
+    year: int
+    month: int
+    day: int
+    marked: bool
+
+
+@api.put('/monitoring/tanggal-mark')
+async def toggle_tanggal_mark(payload: TanggalMarkUpdate, user: dict = Depends(auth.require_koordinator)):
+    """Toggle tanda manual pada header tanggal (mis. 'QC sudah diinput'). Berlaku per periode
+    (year, month) untuk seluruh tabel Pemantauan Stok, bukan per reagen."""
+    if payload.month < 1 or payload.month > 12:
+        raise HTTPException(400, 'Bulan tidak valid')
+    ndays = days_in_month(payload.year, payload.month)
+    if payload.day < 1 or payload.day > ndays:
+        raise HTTPException(400, 'Tanggal tidak valid')
+    existing = await periode_meta_col.find_one({'year': payload.year, 'month': payload.month})
+    marked = set((existing or {}).get('marked_days') or [])
+    if payload.marked:
+        marked.add(payload.day)
+    else:
+        marked.discard(payload.day)
+    marked_days = sorted(marked)
+    if existing:
+        await periode_meta_col.update_one(
+            {'year': payload.year, 'month': payload.month},
+            {'$set': {'marked_days': marked_days}})
+    else:
+        await periode_meta_col.insert_one({
+            'id': str(uuid.uuid4()), 'year': payload.year, 'month': payload.month,
+            'marked_days': marked_days, 'created_at': datetime.now(timezone.utc).isoformat(),
+        })
+    return {'ok': True, 'marked_days': marked_days}
 
 
 class AutoSaldoBody(BaseModel):

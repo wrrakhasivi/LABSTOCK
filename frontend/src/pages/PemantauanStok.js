@@ -229,6 +229,16 @@ export default function PemantauanStok() {
     } catch (e) { toast.error('Gagal menyimpan nilai harian'); }
   };
 
+  const markedDaysSet = useMemo(() => new Set(data?.marked_days || []), [data]);
+
+  const toggleMark = async (day) => {
+    const isMarked = markedDaysSet.has(day);
+    try {
+      await api.toggleTanggalMark({ year, month, day, marked: !isMarked });
+      load();
+    } catch (e) { toast.error('Gagal menyimpan tanda tanggal'); }
+  };
+
   const runAuto = async () => {
     setAutoLoading(true);
     try {
@@ -346,9 +356,25 @@ export default function PemantauanStok() {
                       </button>
                     </th>
                     <th className="border-b px-2 py-2 text-right whitespace-nowrap" title="Klik nilai untuk edit manual, atau gunakan tombol Saldo Awal Otomatis">Saldo Awal ✎</th>
-                    {dayCols.map((d) => (
-                      <th key={d} className={`ls-day-col border-b py-2 ${d === todayCol ? 'ls-today' : ''}`} title={d === todayCol ? 'Hari ini' : undefined} data-testid={d === todayCol ? 'today-col-header' : undefined}>{d}</th>
-                    ))}
+                    {dayCols.map((d) => {
+                      const isMarked = markedDaysSet.has(d);
+                      return (
+                        <th
+                          key={d}
+                          className={`ls-day-col relative border-b py-2 ${d === todayCol ? 'ls-today' : ''} ${isKoordinator ? 'cursor-pointer hover:bg-primary/10' : ''}`}
+                          title={isKoordinator
+                            ? (isMarked ? `Hari ${d}: QC sudah diinput (klik untuk hapus tanda)` : `Hari ${d}: klik untuk tandai QC sudah diinput`)
+                            : (isMarked ? `Hari ${d}: QC sudah diinput` : `Hari ${d}`)}
+                          data-testid={isMarked ? `day-header-marked-${d}` : `day-header-${d}`}
+                          onClick={() => isKoordinator && toggleMark(d)}
+                        >
+                          <span className={isMarked ? 'font-bold text-emerald-600' : ''}>{d}</span>
+                          {isMarked && (
+                            <span className="absolute left-1/2 top-0.5 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-emerald-500" data-testid={`day-mark-dot-${d}`} />
+                          )}
+                        </th>
+                      );
+                    })}
                     <th className="ls-sum-col border-b border-l py-2 text-right" title="Input manual QC (klik untuk edit)">QC ✎</th>
                     <th className="ls-sum-col border-b py-2 text-right">Total<br />Pakai</th>
                     <th className="ls-sum-col border-b py-2 text-right">Stok<br />Masuk</th>
@@ -424,6 +450,7 @@ export default function PemantauanStok() {
               <Pencil className="h-3 w-3" />
               Kolom <b>Saldo Awal</b> & <b>QC</b> dapat diklik untuk input manual. <b>Sisa Stok</b> dihitung otomatis (tidak dapat diubah manual). Tombol <b>Saldo Awal Otomatis</b> mengisi saldo awal dari sisa stok bulan sebelumnya.
               Reagen turunan (mis. <b>Kit Elisa Quantiferon</b>) — kolom harian 1-31 default otomatis = Quantiferon Tube × 4, dan dapat diklik untuk diedit manual per tanggal (angka <span className="font-bold text-amber-600">tebal kuning</span> = sudah diedit manual).
+              Klik nomor pada <b>header tanggal</b> (1-31) untuk menandai hari tersebut sudah di-input QC (<span className="font-bold text-emerald-600">tanda titik hijau</span>), klik lagi untuk menghapus tanda.
             </p>
           </div>
         </>

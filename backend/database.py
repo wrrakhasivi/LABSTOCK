@@ -22,6 +22,7 @@ lis_raw_col = db['lis_raw']
 import_log_col = db['import_log']
 users_col = db['users']
 settings_col = db['settings']
+periode_meta_col = db['periode_meta']
 
 
 async def ensure_indexes():
@@ -33,3 +34,4 @@ async def ensure_indexes():
     await mapping_col.create_index('lis_name')
     await lis_raw_col.create_index('period')
     await users_col.create_index('username', unique=True)
+    await periode_meta_col.create_index([('year', 1), ('month', 1)], unique=True)
