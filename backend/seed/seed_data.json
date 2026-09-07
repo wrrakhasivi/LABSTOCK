@@ -1069,7 +1069,7 @@
       "satuan": "Tube"
     },
     {
-      "reagen": "Kit Elisa Quantiferon",
+      "reagen": "Quantiferon Kit Elisa",
       "qty_per_kit": 192,
       "avg_2022": 268,
       "avg_2023": 256,
@@ -2283,7 +2283,7 @@
       "satuan": "Tube"
     },
     {
-      "reagen": "Kit Elisa Quantiferon",
+      "reagen": "Quantiferon Kit Elisa",
       "qty_per_kit": 192,
       "avg_2022": 268,
       "avg_2023": 256,
@@ -7067,7 +7067,7 @@
     },
     {
       "lis_name": "Kit Elisa Quantiferon (Formula: 4x Quantiferon Tube)",
-      "reagen": "Kit Elisa Quantiferon",
+      "reagen": "Quantiferon Kit Elisa",
       "status": "OK"
     }
   ],
@@ -18957,7 +18957,7 @@
     },
     {
       "period": "2026-08",
-      "reagen": "Kit Elisa Quantiferon",
+      "reagen": "Quantiferon Kit Elisa",
       "tanggal_pr": "2026-08-04 00:00:00",
       "reagent_no": 1,
       "kits": 2
@@ -19362,7 +19362,7 @@
     },
     {
       "period": "2026-08",
-      "reagen": "Kit Elisa Quantiferon",
+      "reagen": "Quantiferon Kit Elisa",
       "tanggal_terima": "2026-08-11 00:00:00",
       "reagent_no": 1,
       "kits": 2,
@@ -19520,7 +19520,7 @@
       "satuan": "Pcs"
     },
     {
-      "nama_reagen": "Kit Elisa Quantiferon",
+      "nama_reagen": "Quantiferon Kit Elisa",
       "item_code": null,
       "qty_per_kit": 192,
       "avg_2022": 268,
