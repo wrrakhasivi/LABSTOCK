@@ -189,7 +189,7 @@ backend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 9
+  test_sequence: 10
   run_ui: false
 
 test_plan:
@@ -207,6 +207,10 @@ agent_communication:
     -message: "NEW FEATURES TESTING COMPLETE (Test Sequence 4). Both tasks verified and working correctly. TASK 1 - Daily LIS Computation: Dynamic computation from lis_raw via mapping_test is working perfectly✓. Independently verified all daily values match between API and direct MongoDB computation. Tested with July 2026 data (999 lis_raw docs). Examples: Hematologi total=179✓, Hbsag rapid total=24✓. All hari values (1-31) correctly aggregated through mapping_test (status=OK). NOTE: Test requirement specified Aug 2026 data with Hematologi total=43, but database only has July 2026 lis_raw data - this is a data availability issue, not implementation issue. TASK 2 - QC Manual Endpoint: Working perfectly✓. All 100 rows have is_override=false (automatic Sisa Stok)✓. Tested PUT /api/monitoring/qc with Ferritin: QC updated 3→5✓, total_pemakaian=sum(hari)+qc (0+5=5)✓, sisa_stock=saldo_awal-total+stok_masuk (46-5+0=41)✓. Arithmetic verified correct. Original QC restored after testing. Both features ready for production."
     -agent: "testing"
     -message: "LIS IMPORT BUG FIX TESTING COMPLETE (Test Sequence 6). All three test scenarios PASSED✓. BUG FIX VERIFIED: Per-row Tanggal column now correctly spreads usage to each row's actual date instead of placing everything on day 31 (the filename date). Test details: Created Excel LIS_260831.xlsx with per-row Tanggal column (UIBC on days 2,9 and Hematology Lengkap on days 20,27). Import successful. Monitoring confirmed values on correct days: UIBC={'2':4,'9':6}✓, Hematologi={'20':5,'27':7}✓. NOT all on day 31. Bug is FIXED. REGRESSION TESTS PASSED: (1) Matrix day-columns format still works correctly (LIS_260830.xlsx: UIBC days 5,12)✓. (2) Single date from filename format still works correctly (LIS_260803.xlsx: UIBC day 3)✓. CLEANUP COMPLETE: All 3 test source files deleted (107 pemakaian records removed). Database returned to prior state. Ready for production."
+    -agent: "user"
+    -message: "DATA MIGRATION VERIFICATION REQUEST (Test Sequence 10): Verify migrated production data for Agustus 2026 and September 2026. Test: 1) Pemantauan Stok page - Agustus 2026: 98 reagent rows with populated Saldo Awal/QC values, status badges rendering. 2) Pemantauan Stok page - September 2026: 98 rows with data. 3) PRF page - Agustus 2026: 15 PRF entries with status/dates. 4) PRF page - September 2026: 17 PRF entries. 5) Penerimaan page - Agustus 2026: 32 entries with quantities. 6) Penerimaan page - September 2026: 2 entries. 7) No console errors."
+    -agent: "testing"
+    -message: "DATA MIGRATION VERIFICATION COMPLETE (Test Sequence 10). ALL TESTS PASSED✓. Database migration successful - all data rendering correctly in UI. RESULTS: (1) Pemantauan Stok Agustus 2026: 98 rows✓, Saldo Awal populated (sample: 17, 1649, 13, 52, 68)✓, QC populated (sample: 0, 24, 0, 8, 16)✓, Status badges rendering (Kritis:3, Waspada:9, Aman:82, Perlu Cek:4)✓. (2) Pemantauan Stok September 2026: 98 rows✓, Saldo Awal populated (sample: 16, 511, 12, 39, 43)✓, Status badges (Kritis:13, Waspada:17, Aman:66, Perlu Cek:2)✓. (3) PRF Agustus 2026: 15 entries✓, Status badges (Diterima/Menunggu)✓, Dates displaying (01 Agu 2026, 08 Agu 2026, 19 Agu 2026)✓. (4) PRF September 2026: 17 entries✓. (5) Penerimaan Agustus 2026: 32 entries✓, Quantities populated (sample: 30, 60, 60, 100, 25)✓. (6) Penerimaan September 2026: 2 entries✓. (7) Console errors: 0 critical errors✓. Migration verified successfully - all data for both periods rendering correctly across all pages."
 frontend:
   - task: "Pemantauan Stok: perapatan kolom 1-31 & kolom ringkasan"
     implemented: true

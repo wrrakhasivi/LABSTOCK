@@ -125,6 +125,21 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   belum diisi ulang (fitur WhatsApp API kirim akan nonaktif sampai diisi lagi). Tested: auto_frontend_testing_agent
   smoke test – login Koordinator & Petugas, semua 9 halaman, RBAC, logout, semua PASS.
 
+- **(2026-09-07) Migrasi Data Real Agustus & September 2026**: Data Saldo Awal, QC (Pemantauan Stok), PRF, dan
+  Penerimaan bulan Agustus & September 2026 diambil dari instance live lain (stock-status-5.preview.emergentagent.com,
+  login raihan/rakhasivi123) via API GET (/api/monitoring, /api/prf, /api/penerimaan) dan ditulis langsung ke
+  MongoDB lokal (upsert per reagen_id+year+month untuk stock_period; upsert per id untuk prf/penerimaan). Data
+  seed placeholder lama utk periode 2026-08/2026-09 yang tidak match id remote dihapus supaya persis sama dgn
+  web asal (33 PRF & 21 Penerimaan placeholder dihapus). Ditemukan & diperbaiki data quality issue pra-existing:
+  reagen "Hbsag rapid" punya 2 entri duplikat case-insensitive di master_reagen lokal (`HBsAg rapid` vs
+  `Hbsag rapid`) — hanya salah satu yang benar2 ter-mapping (status OK di mapping_test); PRF/Penerimaan/
+  stock_period utk reagen ini dipindah ke id yang benar. Hasil: 98/98 reagen match saldo_awal+qc exact,
+  PRF Agustus=15/September=17, Penerimaan Agustus=32/September=2 — semua persis sama dgn web sumber. Catatan:
+  kolom harian (1-31) & status Kritis/Waspada/Aman TIDAK 100% sama karena berasal dari data LIS mentah (impor
+  Excel) yang berbeda antar instance — di luar scope permintaan user (hanya Pemantauan Stok/PRF/Penerimaan yg
+  "sudah di input" manual). Tested: auto_frontend_testing_agent — semua halaman render data migrasi dgn benar,
+  tidak ada console error.
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.
