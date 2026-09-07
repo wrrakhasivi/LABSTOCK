@@ -395,11 +395,16 @@ function MappingTab() {
   );
 }
 
+const currentPeriod = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+};
+
 function RawTab() {
   const { isKoordinator } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState('2026-07');
+  const [period, setPeriod] = useState(currentPeriod);
   const [sources, setSources] = useState([]);
 
   const load = () => {
@@ -428,7 +433,7 @@ function RawTab() {
         <Select value={period} onValueChange={setPeriod}>
           <SelectTrigger className="h-9 w-[150px]" data-testid="lis-period-filter"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {(data?.periods || ['2026-07', '2026-08']).map((p) => (
+            {(data?.periods || [currentPeriod()]).map((p) => (
               <SelectItem key={p} value={p}>{p}</SelectItem>
             ))}
           </SelectContent>
