@@ -155,6 +155,28 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   auto_frontend_testing_agent — formula default, edit manual, persist setelah reload, clear override kembali
   ke formula, semua PASS; reagen lain tetap read-only di kolom harian (tidak ada regresi).
 
+- **(2026-09-07) Verifikasi & Perbaikan Permanensi Data**: Audit menyeluruh atas permintaan user memastikan
+  tidak ada data yang hilang saat restart/redeploy/periode baru. Temuan:
+  (1) MongoDB dbpath aktual = `/data/db`, dimount pada disk persisten (`/dev/nvme0n7`, sama dgn `/app`) —
+  BUKAN `/var/lib/mongodb` seperti tertulis di `/etc/mongod.conf` (file itu tidak dipakai krn mongod dijalankan
+  tanpa `--config`). Dikonfirmasi aman via restart backend & mongodb — 0 data hilang (reagen/stock_period/
+  lis_raw/prf/penerimaan semua intact).
+  (2) BUG KRITIS ditemukan & diperbaiki: fitur "Auto-Hapus File Mentah Excel LIS" (Pengaturan, retensi 3/30 hari,
+  `_lis_retention_loop` jalan tiap 1 jam) SALAH ASUMSI — kolom harian 1-31 Pemantauan Stok dihitung LANGSUNG
+  dari `lis_raw` tiap request (bukan dari `pemakaian_harian` yg permanen), jadi auto-hapus `lis_raw` akan
+  membuat kolom harian 1-31 utk periode lama kembali 0/kosong. Retensi aktif saat ditemukan = 3 hari (akan
+  trigger dlm hitungan hari). Fix: hapus total fitur auto-hapus (`_lis_retention_loop`,
+  `_run_lis_retention_cleanup`, endpoint `PUT /api/settings`, scheduler di startup) — `lis_raw` kini permanen
+  selamanya, hanya bisa dihapus manual oleh Koordinator (hapus source file / hapus periode, sudah ada
+  confirmation dialog). `GET /api/settings` disederhanakan (`auto_delete_enabled: false` + riwayat cleanup lama
+  jika ada). Halaman Pengaturan diganti jadi kartu informasi statis "Data Tersimpan Permanen"
+  (`data-testid="data-permanence-card"`), dropdown & tombol Simpan retensi dihapus.
+  (3) Tidak ditemukan penyimpanan data bisnis di memory/session — semua koleksi (reagen, stock_period,
+  pemakaian_harian, prf, penerimaan, mapping_test, lis_raw, users, import_log) murni MongoDB, tidak ada
+  global dict/list Python yang dipakai sbg data store. Tested: auto_frontend_testing_agent — halaman
+  Pengaturan baru, akses Petugas ditolak, regresi Pemantauan Stok/Data LIS/PRF/Penerimaan semua PASS; verifikasi
+  manual restart backend & mongodb — semua data (termasuk hari_override Kit Elisa Quantiferon) tetap intact.
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.
