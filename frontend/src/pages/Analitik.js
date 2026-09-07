@@ -368,7 +368,7 @@ export default function Analitik() {
                 <XAxis type="number" fontSize={11} stroke="hsl(var(--muted-foreground))" />
                 <YAxis type="category" dataKey="nama_reagen" width={150} fontSize={11} stroke="hsl(var(--muted-foreground))" />
                 <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [fmtNum(v), 'Total Pemakaian']} />
-                <Bar dataKey="jumlah" name="Total Pemakaian" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="jumlah" name="Total Pemakaian" fill="#0d9488" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
