@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import { Toaster } from './components/ui/sonner';
 import { PeriodProvider } from './lib/period';
@@ -14,7 +14,6 @@ import DataLIS from './pages/DataLIS';
 import PRF from './pages/PRF';
 import Penerimaan from './pages/Penerimaan';
 import AnalisisExcel from './pages/AnalisisExcel';
-import Pengguna from './pages/Pengguna';
 import Pengaturan from './pages/Pengaturan';
 import Analitik from './pages/Analitik';
 
@@ -31,7 +30,7 @@ function AuthedApp() {
           <Route path="/prf" element={<PRF />} />
           <Route path="/penerimaan" element={<Penerimaan />} />
           <Route path="/analisis-excel" element={<AnalisisExcel />} />
-          <Route path="/pengguna" element={<Pengguna />} />
+          <Route path="/pengguna" element={<Navigate to="/pengaturan" replace />} />
           <Route path="/pengaturan" element={<Pengaturan />} />
         </Routes>
       </AppShell>

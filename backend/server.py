@@ -142,19 +142,19 @@ class UserCreate(BaseModel):
 
 @api.get('/users')
 async def list_users(user: dict = Depends(auth.require_koordinator)):
-    """Daftar akun (Petugas & Koordinator) — hanya Koordinator."""
+    """Daftar akun (Petugas, Koordinator, Admin) — dapat dilihat oleh Koordinator & Admin."""
     docs = await users_col.find({}, {'_id': 0, 'password_hash': 0}).sort('username', 1).to_list(500)
     return docs
 
 
 @api.post('/users', status_code=201)
-async def create_user(payload: UserCreate, user: dict = Depends(auth.require_koordinator)):
-    """Koordinator membuat akun baru (Petugas atau Koordinator lain)."""
+async def create_user(payload: UserCreate, user: dict = Depends(auth.require_admin)):
+    """Hanya Admin yang dapat membuat akun baru (Petugas, Koordinator, atau Admin lain)."""
     username = (payload.username or '').strip().lower()
     if not username:
         raise HTTPException(400, 'Username wajib diisi')
-    if payload.role not in ('petugas', 'koordinator'):
-        raise HTTPException(400, 'Role tidak valid (petugas / koordinator)')
+    if payload.role not in ('petugas', 'koordinator', 'admin'):
+        raise HTTPException(400, 'Role tidak valid (petugas / koordinator / admin)')
     if len(payload.password) < 4:
         raise HTTPException(400, 'Password minimal 4 karakter')
     existing = await users_col.find_one({'username': username})
@@ -174,17 +174,18 @@ async def create_user(payload: UserCreate, user: dict = Depends(auth.require_koo
 
 
 @api.delete('/users/{username}')
-async def delete_user(username: str, user: dict = Depends(auth.require_koordinator)):
-    """Koordinator menghapus akun. Tidak dapat menghapus akun sendiri atau satu-satunya Koordinator."""
+async def delete_user(username: str, user: dict = Depends(auth.require_admin)):
+    """Hanya Admin yang dapat menghapus akun. Tidak dapat menghapus akun sendiri atau
+    satu-satunya Admin (agar tidak ada yang terkunci dari pengelolaan akun)."""
     if username == user['username']:
         raise HTTPException(400, 'Tidak dapat menghapus akun sendiri')
     existing = await users_col.find_one({'username': username})
     if not existing:
         raise HTTPException(404, 'Akun tidak ditemukan')
-    if existing.get('role') == 'koordinator':
-        remaining = await users_col.count_documents({'role': 'koordinator'})
+    if existing.get('role') == 'admin':
+        remaining = await users_col.count_documents({'role': 'admin'})
         if remaining <= 1:
-            raise HTTPException(400, 'Tidak dapat menghapus satu-satunya akun Koordinator')
+            raise HTTPException(400, 'Tidak dapat menghapus satu-satunya akun Admin')
     await users_col.delete_one({'username': username})
     return {'ok': True}
 

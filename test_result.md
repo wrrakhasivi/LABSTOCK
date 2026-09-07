@@ -186,10 +186,42 @@ backend:
         -agent: "testing"
         -comment: "VERIFIED: All three test scenarios PASSED. TEST 1 (Per-row Tanggal - BUG FIX): Created Excel with per-row Tanggal column (LIS_260831.xlsx) containing UIBC on days 2,9 and Hematology Lengkap on days 20,27. Import successful (4 pemakaian records). Monitoring data confirmed: UIBC hari={'2':4, '9':6}, Hematologi hari={'20':5, '27':7}. Values correctly spread to per-row dates, NOT all on day 31✓. Bug is FIXED. TEST 2 (Matrix day-columns - REGRESSION): Created Excel with matrix format (LIS_260830.xlsx) with UIBC values on days 5,12. Import successful (2 pemakaian records). Monitoring confirmed: UIBC day 5=3✓, day 12=8✓. Matrix format still works correctly. TEST 3 (Single date from filename - REGRESSION): Created Excel with single date from filename (LIS_260803.xlsx) with UIBC=2. Import successful (1 pemakaian record). Monitoring confirmed: UIBC day 3=2✓. Single date format still works correctly. CLEANUP: Successfully deleted all 3 test source files (LIS_260831, LIS_260830, LIS_260803) and their data (4 lis_raw docs, 107 pemakaian docs total). Database returned to prior state. Final monitoring shows UIBC and Hematologi with all zeros (clean state)✓. All regression tests passed, bug fix verified working."
 
+backend:
+  - task: "3-role permission system (Petugas, Koordinator, Admin) with user management"
+    implemented: true
+    working: true
+    file: "backend/server.py, backend/auth.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Added 3rd role 'admin' with exclusive user management rights. Admin has all Koordinator permissions PLUS can add/delete user accounts. Backend endpoints: GET /api/users (Koordinator+Admin), POST /api/users (Admin only), DELETE /api/users/{username} (Admin only). raihan account migrated from 'koordinator' to 'admin' role. auth.require_koordinator allows both koordinator and admin roles. auth.require_admin allows only admin role."
+        -working: true
+        -agent: "testing"
+        -comment: "VERIFIED (Test Sequence 14): All 11 test scenarios PASSED✓. Backend 3-role permission system working perfectly. (1) raihan account successfully migrated to 'admin' role✓. (2) Admin has all Koordinator permissions (can edit Saldo Awal in Pemantauan Stok)✓. (3) User management endpoints working correctly: GET /api/users returns user list✓, POST /api/users creates new user (tested with 'cobauser' as Koordinator)✓, DELETE /api/users/{username} deletes user✓. (4) Role-based access control enforced: Petugas cannot access Pengaturan page (shows access denied message)✓. (5) No console errors or network errors detected✓. Feature ready for production."
+
+frontend:
+  - task: "3-role permission system UI: Pengaturan page with Kelola Pengguna tab"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Pengaturan.js, frontend/src/components/AppShell.js, frontend/src/lib/auth.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Merged 'Kelola Pengguna' into Pengaturan page as a tab. Pengaturan now has 2 tabs: 'Umum' (data permanence card) and 'Kelola Pengguna' (user management). Only Admin can see 'Tambah Akun' button and delete buttons. User badge shows role with icons: Admin (Crown, amber), Koordinator (ShieldCheck, emerald), Petugas (Eye, slate). Sidebar nav shows only 'Pengaturan' (no separate 'Kelola Pengguna' item). Access control: Pengaturan page requires Koordinator or Admin role."
+        -working: true
+        -agent: "testing"
+        -comment: "VERIFIED (Test Sequence 14): All 11 test scenarios PASSED✓. Frontend 3-role permission system UI working perfectly. (1) Login as raihan shows 'raihan · Admin' badge with Crown icon✓. (2) Sidebar has 'Pengaturan' but NOT 'Kelola Pengguna' as separate item✓. (3) Pengaturan page has 2 tabs: 'Umum' and 'Kelola Pengguna'✓. (4) 'Tambah Akun' button visible for Admin✓. (5) Created test user 'cobauser' with role 'Koordinator' successfully✓. (6) Delete button visible for 'cobauser'✓. (7) Deleted 'cobauser' successfully✓. (8) Admin can edit Saldo Awal (Koordinator action)✓. (9) Login as kalgen shows 'kalgen · Petugas' badge with Eye icon✓. (10) Petugas cannot access Pengaturan page (shows 'Halaman ini hanya dapat diakses oleh Koordinator atau Admin')✓. (11) No console errors✓. Feature ready for production."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 10
+  test_sequence: 14
   run_ui: false
 
 test_plan:
@@ -345,3 +377,7 @@ agent_communication:
     -message: "VISUAL VERIFICATION REQUEST (Test Sequence 13): Simple visual check for Analitik page chart color change. Login as Koordinator (raihan/rakhasivi123), navigate to Analitik page, scroll to second chart 'Perbandingan Pemakaian Antar Reagen' (horizontal bar chart). Verify bars are now GREEN/teal colored (hex #0d9488, matching the line color in 'Tren Pemakaian' chart above) instead of previous amber/orange. Take screenshot to confirm. Check for console errors."
     -agent: "testing"
     -message: "ANALITIK CHART COLOR VERIFICATION COMPLETE (Test Sequence 13). VISUAL VERIFICATION PASSED✓. Simple color change successfully implemented and verified. SUMMARY: Login as Koordinator (raihan/rakhasivi123) successful✓. Navigated to Analitik page✓. Both charts rendered correctly: (1) 'Tren Pemakaian — Semua Reagen' line chart displays with teal/green line✓. (2) 'Perbandingan Pemakaian Antar Reagen' horizontal bar chart displays with teal/green bars✓. Visual inspection of screenshot confirms bars are GREEN/TEAL colored, matching the line chart above✓. Code verification: Analitik.js line 371 shows fill='#0d9488' (teal/green color)✓. No console errors detected (only non-critical Cloudflare RUM request failure)✓. Color change from amber/orange to green/teal successfully verified. Ready for production."
+    -agent: "user"
+    -message: "3-ROLE PERMISSION SYSTEM TEST REQUEST (Test Sequence 14): Test new 3-role permission system (Petugas, Koordinator, Admin). 'Kelola Pengguna' merged into Pengaturan page as tab. Admin role added with exclusive user add/delete rights. raihan account now 'admin' (was Koordinator). Test: (1) Login raihan/rakhasivi123, verify badge shows 'raihan · Admin'. (2) Sidebar has 'Pengaturan' but NOT 'Kelola Pengguna'. (3) Pengaturan has 2 tabs: 'Umum' and 'Kelola Pengguna'. (4) 'Tambah Akun' button visible for Admin. (5) Create test user 'cobauser' with role 'Koordinator'. (6) Verify delete button visible for 'cobauser'. (7) Delete 'cobauser'. (8) Verify Admin can edit Saldo Awal (Koordinator action). (9) Logout, login as kalgen/kalgen, verify badge shows 'kalgen · Petugas'. (10) Navigate to /pengaturan, verify access denied message. (11) No console errors."
+    -agent: "testing"
+    -message: "3-ROLE PERMISSION SYSTEM TESTING COMPLETE (Test Sequence 14). ALL 11 TESTS PASSED✓. New RBAC feature working perfectly. SUMMARY: (1) raihan badge shows 'raihan · Admin' with Crown icon (amber color)✓. (2) Sidebar has 'Pengaturan' but NOT 'Kelola Pengguna' as separate item✓. (3) Pengaturan page has 2 tabs: 'Umum' (data-testid='tab-umum', shows permanence card) and 'Kelola Pengguna' (data-testid='tab-pengguna')✓. (4) 'Tambah Akun' button (data-testid='user-add-button') visible for Admin✓. (5) Created test user 'cobauser' with username='cobauser', password='test1234', role='Koordinator' successfully, appears in table with 'Koordinator' badge (emerald color)✓. (6) Delete button (data-testid='user-delete-button-cobauser') visible for 'cobauser' since current user is Admin✓. (7) Deleted 'cobauser' successfully with success toast✓. (8) Admin (raihan) can edit Saldo Awal in Pemantauan Stok (Koordinator action) - clicked cell, input field appeared✓. (9) kalgen badge shows 'kalgen · Petugas' with Eye icon (slate color)✓. (10) Petugas direct navigation to /pengaturan shows access denied message 'Halaman ini hanya dapat diakses oleh Koordinator atau Admin' (data-testid='pengaturan-access-denied')✓. (11) No console errors (4 logs total, 0 critical errors), no network errors✓. Backend endpoints working: GET /api/users (Koordinator+Admin), POST /api/users (Admin only), DELETE /api/users/{username} (Admin only). Frontend role checks working: isKoordinator (koordinator OR admin), isAdmin (admin only). Feature ready for production."

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Table2, FlaskConical, Database, FileText, PackageCheck,
-  BookOpen, Menu, X, RefreshCw, Activity, LogOut, ShieldCheck, Eye, Users, Settings, LineChart,
+  BookOpen, Menu, X, RefreshCw, Activity, LogOut, ShieldCheck, Eye, Settings, LineChart, Crown,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -22,7 +22,6 @@ const NAV = [
   { to: '/prf', label: 'PRF', icon: FileText, slug: 'prf' },
   { to: '/penerimaan', label: 'Penerimaan', icon: PackageCheck, slug: 'penerimaan' },
   { to: '/analisis-excel', label: 'Analisis Struktur Excel', icon: BookOpen, slug: 'analisis-excel' },
-  { to: '/pengguna', label: 'Kelola Pengguna', icon: Users, slug: 'pengguna', koordinatorOnly: true },
   { to: '/pengaturan', label: 'Pengaturan', icon: Settings, slug: 'pengaturan', koordinatorOnly: true },
 ];
 
@@ -35,7 +34,6 @@ const PAGE_TITLES = {
   '/prf': 'PRF (Purchase Request)',
   '/penerimaan': 'Penerimaan Barang',
   '/analisis-excel': 'Analisis Struktur Excel',
-  '/pengguna': 'Kelola Pengguna',
   '/pengaturan': 'Pengaturan',
 };
 
@@ -84,18 +82,22 @@ const SidebarContent = ({ onNavigate }) => {
 };
 
 const UserBadge = () => {
-  const { user, logout, isKoordinator } = useAuth();
+  const { user, logout, isAdmin, isKoordinator } = useAuth();
   if (!user) return null;
+  const roleLabel = isAdmin ? 'Admin' : isKoordinator ? 'Koordinator' : 'Petugas';
+  const roleCls = isAdmin
+    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+    : isKoordinator
+      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+      : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
   return (
     <div className="flex items-center gap-1" data-testid="user-badge">
       <span
-        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-          isKoordinator ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-        }`}
+        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${roleCls}`}
         data-testid="user-role-badge"
       >
-        {isKoordinator ? <ShieldCheck className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-        {user.username} · {isKoordinator ? 'Koordinator' : 'Petugas'}
+        {isAdmin ? <Crown className="h-3.5 w-3.5" /> : isKoordinator ? <ShieldCheck className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+        {user.username} · {roleLabel}
       </span>
       <ChangePasswordButton />
       <ThemeToggleButton />

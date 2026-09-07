@@ -177,6 +177,21 @@ pemakaian harian (1-31), QC manual, Sisa Stok otomatis, status Kritis/Waspada/Am
   Pengaturan baru, akses Petugas ditolak, regresi Pemantauan Stok/Data LIS/PRF/Penerimaan semua PASS; verifikasi
   manual restart backend & mongodb — semua data (termasuk hari_override Kit Elisa Quantiferon) tetap intact.
 
+- **(2026-09-07) Role Admin (3-Role RBAC) & Merge Kelola Pengguna ke Pengaturan**: Ditambahkan role ke-3
+  "admin" (auth.py ACCOUNTS/seed_accounts — migrasi satu-kali: akun `raihan` dipromosikan dari 'koordinator'
+  ke 'admin' otomatis saat startup bila belum). `require_koordinator` kini menerima role koordinator ATAU
+  admin (admin = semua akses koordinator). `require_admin` (baru) khusus utk `POST/DELETE /api/users` — hanya
+  Admin yang bisa tambah/hapus akun pengguna (`GET /api/users` tetap bisa dilihat Koordinator+Admin). Guard
+  "tidak bisa hapus satu-satunya Koordinator" dihapus (sudah tidak relevan, diganti guard "tidak bisa hapus
+  satu-satunya Admin"). Frontend: `lib/auth.js` — `isKoordinator` = role koordinator/admin, `isAdmin` = role
+  admin (baru). Nav "Kelola Pengguna" dihapus dari sidebar, kontennya digabung sbg tab "Kelola Pengguna" di
+  dalam halaman Pengaturan (tab "Umum" = kartu permanensi data lama, tab "Kelola Pengguna" = tabel &
+  tambah/hapus akun, tombol Tambah/Hapus hanya tampil utk isAdmin). Route `/pengguna` redirect ke
+  `/pengaturan`. Badge role di topbar: Admin (Crown, amber), Koordinator (ShieldCheck, emerald), Petugas
+  (Eye, slate). Tested: auto_frontend_testing_agent — 11/11 skenario PASS (badge Admin, nav tanpa Kelola
+  Pengguna terpisah, tab Pengaturan, tambah/hapus akun oleh Admin, Admin bisa aksi koordinator (edit Saldo
+  Awal), Petugas ditolak akses Pengaturan). credentials updated di test_credentials.md.
+
 ## Backlog
 - P1: WhatsApp Send History – daftar riwayat kirim (waktu, status, jumlah kritis) di Dashboard.
 - P2: Dropdown pilih Master Reagen pada edit Pemetaan Test.

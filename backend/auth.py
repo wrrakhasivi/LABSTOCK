@@ -1,4 +1,5 @@
-"""Autentikasi JWT sederhana berbasis peran: Petugas (lihat saja) vs Koordinator (semua akses)."""
+"""Autentikasi JWT sederhana berbasis peran: Petugas (lihat saja), Koordinator (akses penuh data),
+dan Admin (akses penuh data + kelola akun pengguna)."""
 import os
 import bcrypt
 import jwt
@@ -12,10 +13,10 @@ from database import users_col
 JWT_ALGORITHM = 'HS256'
 TOKEN_EXPIRE_HOURS = 12
 
-# Akun tetap: Petugas (lihat saja) & Koordinator (semua akses: tambah/hapus/edit)
+# Akun tetap: Petugas (lihat saja) & Admin (akses penuh + kelola akun)
 ACCOUNTS = [
     {'username': 'kalgen', 'password': 'kalgen', 'role': 'petugas'},
-    {'username': 'raihan', 'password': 'rakhasivi123', 'role': 'koordinator'},
+    {'username': 'raihan', 'password': 'rakhasivi123', 'role': 'admin'},
 ]
 
 
@@ -42,10 +43,11 @@ def create_token(username: str, role: str, token_version: int = 0) -> str:
 
 
 async def seed_accounts():
-    """Buat 2 akun tetap (Petugas & Koordinator) sekali saja bila belum ada.
+    """Buat 2 akun tetap (Petugas & Admin) sekali saja bila belum ada.
 
     Tidak pernah menimpa password/role akun yang sudah ada, agar fitur Ganti
-    Password tidak ter-reset setiap kali backend restart.
+    Password tidak ter-reset setiap kali backend restart. Kecuali migrasi satu-kali:
+    akun 'raihan' dipromosikan ke role 'admin' bila masih tersimpan sebagai 'koordinator'.
     """
     for acc in ACCOUNTS:
         existing = await users_col.find_one({'username': acc['username']})
@@ -57,6 +59,8 @@ async def seed_accounts():
                 'token_version': 0,
                 'created_at': datetime.now(timezone.utc).isoformat(),
             })
+        elif acc['username'] == 'raihan' and existing.get('role') != 'admin':
+            await users_col.update_one({'username': 'raihan'}, {'$set': {'role': 'admin'}})
 
 
 async def get_current_user(authorization: Optional[str] = Header(None)):
@@ -83,7 +87,14 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
 
 
 async def require_koordinator(user: dict = Depends(get_current_user)):
-    """Wajib untuk semua aksi Tambah/Edit/Hapus — hanya peran Koordinator."""
-    if user['role'] != 'koordinator':
-        raise HTTPException(403, 'Aksi ini hanya dapat dilakukan oleh Koordinator.')
+    """Wajib untuk semua aksi Tambah/Edit/Hapus data — peran Koordinator & Admin."""
+    if user['role'] not in ('koordinator', 'admin'):
+        raise HTTPException(403, 'Aksi ini hanya dapat dilakukan oleh Koordinator atau Admin.')
+    return user
+
+
+async def require_admin(user: dict = Depends(get_current_user)):
+    """Wajib untuk mengelola akun pengguna (tambah/hapus) — hanya peran Admin."""
+    if user['role'] != 'admin':
+        raise HTTPException(403, 'Aksi ini hanya dapat dilakukan oleh Admin.')
     return user
