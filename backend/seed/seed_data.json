@@ -961,7 +961,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "HCV Rapid",
+      "reagen": "Rapid Anti HCV",
       "qty_per_kit": 25,
       "avg_2022": 2,
       "avg_2023": 1,
@@ -973,7 +973,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Leptospira IgG/IgM",
+      "reagen": "Rapid Leptospira IgG/IgM",
       "qty_per_kit": 25,
       "avg_2022": 5,
       "avg_2023": null,
@@ -985,7 +985,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "AIM Dengue NS1",
+      "reagen": "Rapid AIM Dengue NS1",
       "qty_per_kit": 25,
       "avg_2022": null,
       "avg_2023": null,
@@ -1009,7 +1009,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Hbsag rapid",
+      "reagen": "Rapid HBsAg Rightsign",
       "qty_per_kit": 25,
       "avg_2022": null,
       "avg_2023": null,
@@ -1033,7 +1033,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Fokus HIV",
+      "reagen": "Rapid Fokus HIV",
       "qty_per_kit": 25,
       "avg_2022": null,
       "avg_2023": null,
@@ -1045,7 +1045,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Chikungunya IgM",
+      "reagen": "Rapid Chikungunya IgM",
       "qty_per_kit": 25,
       "avg_2022": null,
       "avg_2023": null,
@@ -2175,7 +2175,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "HCV Rapid",
+      "reagen": "Rapid Anti HCV",
       "qty_per_kit": 25,
       "avg_2022": 2,
       "avg_2023": 1,
@@ -2187,7 +2187,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Leptospira IgG/IgM",
+      "reagen": "Rapid Leptospira IgG/IgM",
       "qty_per_kit": 25,
       "avg_2022": 5,
       "avg_2023": null,
@@ -2199,7 +2199,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "AIM Dengue NS1",
+      "reagen": "Rapid AIM Dengue NS1",
       "qty_per_kit": 25,
       "avg_2022": null,
       "avg_2023": null,
@@ -2223,7 +2223,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "HBsAg rapid",
+      "reagen": "Rapid HBsAg Rightsign",
       "qty_per_kit": 25,
       "avg_2022": null,
       "avg_2023": null,
@@ -2247,7 +2247,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Fokus HIV",
+      "reagen": "Rapid Fokus HIV",
       "qty_per_kit": 25,
       "avg_2022": null,
       "avg_2023": null,
@@ -2259,7 +2259,7 @@
       "satuan": "Pcs"
     },
     {
-      "reagen": "Chikungunya IgM",
+      "reagen": "Rapid Chikungunya IgM",
       "qty_per_kit": 25,
       "avg_2022": null,
       "avg_2023": null,
@@ -2662,7 +2662,7 @@
       }
     },
     {
-      "test": "Hbsag rapid",
+      "test": "Rapid HBsAg Rightsign",
       "days": {
         "1": 1,
         "2": 1,
@@ -3940,7 +3940,7 @@
       }
     },
     {
-      "test": "Fokus HIV",
+      "test": "Rapid Fokus HIV",
       "days": {
         "3": 2,
         "7": 1,
@@ -4128,7 +4128,7 @@
       }
     },
     {
-      "test": "Chikungunya IgM",
+      "test": "Rapid Chikungunya IgM",
       "days": {
         "6": 1,
         "7": 1,
@@ -4249,7 +4249,7 @@
       }
     },
     {
-      "test": "Leptospira IgG/IgM",
+      "test": "Rapid Leptospira IgG/IgM",
       "days": {
         "11": 1,
         "15": 1,
@@ -4259,7 +4259,7 @@
       }
     },
     {
-      "test": "HCV Rapid",
+      "test": "Rapid Anti HCV",
       "days": {
         "11": 1,
         "15": 1,
@@ -4320,7 +4320,7 @@
       }
     },
     {
-      "test": "AIM Dengue NS1",
+      "test": "Rapid AIM Dengue NS1",
       "days": {
         "25": 1
       }
@@ -4603,7 +4603,7 @@
       }
     },
     {
-      "test": "Hbsag rapid",
+      "test": "Rapid HBsAg Rightsign",
       "days": {
         "1": 2,
         "5": 1,
@@ -5723,7 +5723,7 @@
       }
     },
     {
-      "test": "Fokus HIV",
+      "test": "Rapid Fokus HIV",
       "days": {
         "8": 1,
         "10": 1,
@@ -5801,7 +5801,7 @@
       }
     },
     {
-      "test": "HCV Rapid",
+      "test": "Rapid Anti HCV",
       "days": {
         "10": 2,
         "11": 2,
@@ -5831,7 +5831,7 @@
       }
     },
     {
-      "test": "Leptospira IgG/IgM",
+      "test": "Rapid Leptospira IgG/IgM",
       "days": {
         "18": 1
       }
@@ -5982,7 +5982,7 @@
     },
     {
       "lis_name": "Anti-Leptospira IgM",
-      "reagen": "Leptospira IgG/IgM",
+      "reagen": "Rapid Leptospira IgG/IgM",
       "status": "OK"
     },
     {
@@ -6042,7 +6042,7 @@
     },
     {
       "lis_name": "Anti-Cikungunya IgM",
-      "reagen": "Chikungunya IgM",
+      "reagen": "Rapid Chikungunya IgM",
       "status": "OK"
     },
     {
@@ -6127,7 +6127,7 @@
     },
     {
       "lis_name": "Dengue NS1 antigen",
-      "reagen": "AIM Dengue NS1",
+      "reagen": "Rapid AIM Dengue NS1",
       "status": "OK"
     },
     {
@@ -6157,7 +6157,7 @@
     },
     {
       "lis_name": "HBsAg Rapid",
-      "reagen": "Hbsag rapid",
+      "reagen": "Rapid HBsAg Rightsign",
       "status": "OK"
     },
     {
@@ -6172,7 +6172,7 @@
     },
     {
       "lis_name": "Anti HCV Rapid",
-      "reagen": "HCV Rapid",
+      "reagen": "Rapid Anti HCV",
       "status": "OK"
     },
     {
@@ -6187,8 +6187,8 @@
     },
     {
       "lis_name": "Serologi Malaria",
-      "reagen": null,
-      "status": "TIDAK ADA"
+      "reagen": "Rapid Malaria Ag",
+      "status": "OK"
     },
     {
       "lis_name": "Anti-HBc IgM, Kuantitatif",
@@ -6302,7 +6302,7 @@
     },
     {
       "lis_name": "Anti HIV",
-      "reagen": "Fokus HIV",
+      "reagen": "Rapid Fokus HIV",
       "status": "OK"
     },
     {
@@ -7068,6 +7068,11 @@
     {
       "lis_name": "Kit Elisa Quantiferon (Formula: 4x Quantiferon Tube)",
       "reagen": "Quantiferon Kit Elisa",
+      "status": "OK"
+    },
+    {
+      "lis_name": "Anti dengue IgG IgM",
+      "reagen": "Rapid AIM Dengue IgG IgM",
       "status": "OK"
     }
   ],
@@ -18726,7 +18731,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "Hbsag rapid",
+      "reagen": "Rapid HBsAg Rightsign",
       "tanggal_pr": "2026-07-07 00:00:00",
       "reagent_no": 1,
       "kits": 2
@@ -18936,14 +18941,14 @@
     },
     {
       "period": "2026-08",
-      "reagen": "HBsAg rapid",
+      "reagen": "Rapid HBsAg Rightsign",
       "tanggal_pr": "2026-08-04 00:00:00",
       "reagent_no": 1,
       "kits": 2
     },
     {
       "period": "2026-08",
-      "reagen": "Fokus HIV",
+      "reagen": "Rapid Fokus HIV",
       "tanggal_pr": "2026-08-04 00:00:00",
       "reagent_no": 1,
       "kits": 1
@@ -19194,7 +19199,7 @@
     },
     {
       "period": "2026-07",
-      "reagen": "Hbsag rapid",
+      "reagen": "Rapid HBsAg Rightsign",
       "tanggal_terima": "2026-07-13 00:00:00",
       "reagent_no": 1,
       "kits": 2,
@@ -19338,7 +19343,7 @@
     },
     {
       "period": "2026-08",
-      "reagen": "HBsAg rapid",
+      "reagen": "Rapid HBsAg Rightsign",
       "tanggal_terima": "2026-08-11 00:00:00",
       "reagent_no": 1,
       "kits": 2,
@@ -19346,7 +19351,7 @@
     },
     {
       "period": "2026-08",
-      "reagen": "Fokus HIV",
+      "reagen": "Rapid Fokus HIV",
       "tanggal_terima": "2026-08-11 00:00:00",
       "reagent_no": 1,
       "kits": 1,
@@ -19529,6 +19534,28 @@
       "satuan": "Test",
       "derived_from_reagen_name": "Quantiferon Tube",
       "derived_multiplier": 4
+    },
+    {
+      "nama_reagen": "Rapid Malaria Ag",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs",
+      "derived_from_reagen_name": null,
+      "derived_multiplier": null
+    },
+    {
+      "nama_reagen": "Rapid AIM Dengue IgG IgM",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs",
+      "derived_from_reagen_name": null,
+      "derived_multiplier": null
     }
   ]
 }
