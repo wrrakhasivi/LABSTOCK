@@ -6252,23 +6252,23 @@
     },
     {
       "lis_name": "Anti HSV I IgG",
-      "reagen": null,
-      "status": "TIDAK ADA"
+      "reagen": "Novalisa HSV I IgG",
+      "status": "OK"
     },
     {
       "lis_name": "Anti HSV I IgM",
-      "reagen": null,
-      "status": "TIDAK ADA"
+      "reagen": "Novalisa HSV I IgM",
+      "status": "OK"
     },
     {
       "lis_name": "Anti HSV II IgG",
-      "reagen": null,
-      "status": "TIDAK ADA"
+      "reagen": "Novalisa HSV II IgG",
+      "status": "OK"
     },
     {
       "lis_name": "Anti HSV II IgM",
-      "reagen": null,
-      "status": "TIDAK ADA"
+      "reagen": "Novalisa HSV II IgM",
+      "status": "OK"
     },
     {
       "lis_name": "Hs-CRP",
@@ -19548,6 +19548,50 @@
     },
     {
       "nama_reagen": "Rapid AIM Dengue IgG IgM",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs",
+      "derived_from_reagen_name": null,
+      "derived_multiplier": null
+    },
+    {
+      "nama_reagen": "Novalisa HSV I IgG",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs",
+      "derived_from_reagen_name": null,
+      "derived_multiplier": null
+    },
+    {
+      "nama_reagen": "Novalisa HSV I IgM",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs",
+      "derived_from_reagen_name": null,
+      "derived_multiplier": null
+    },
+    {
+      "nama_reagen": "Novalisa HSV II IgG",
+      "item_code": null,
+      "qty_per_kit": null,
+      "avg_2022": null,
+      "avg_2023": null,
+      "buffer_stock": null,
+      "satuan": "Pcs",
+      "derived_from_reagen_name": null,
+      "derived_multiplier": null
+    },
+    {
+      "nama_reagen": "Novalisa HSV II IgM",
       "item_code": null,
       "qty_per_kit": null,
       "avg_2022": null,
